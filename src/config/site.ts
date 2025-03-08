@@ -1,8 +1,9 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: 'Next.js + HeroUI',
-  description: 'Make beautiful websites regardless of your design experience.',
+  name: 'Bash App',
+  description: 'Make your garbage collection easier with Bash App.',
+  icon: '/favicon.ico',
   navItems: [
     {
       label: 'Home',
