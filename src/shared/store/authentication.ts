@@ -12,6 +12,7 @@ interface IUserPayload {
 interface IAuthenticationState {
   payload: IUserPayload;
   isLogin: boolean;
+  isLoading: boolean;
   login: (dto: ILoginResponse) => void;
   logout: () => void;
   initializeAuth: () => void;
@@ -19,6 +20,7 @@ interface IAuthenticationState {
 export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
   payload: {}, // Default empty payload
   isLogin: false, // Assume logged out initially
+  isLoading: false,
   login: (dto) =>
     set(() => {
       Cookies.set('token', dto.token!, {
@@ -67,7 +69,10 @@ export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
       set({
         isLogin: !!token,
         payload: initialPayload,
+        isLoading: false,
       });
+    } else {
+      set({ isLoading: true });
     }
   },
 }));

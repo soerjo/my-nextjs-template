@@ -4,7 +4,6 @@ import {
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarMenu,
-  NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
@@ -19,11 +18,10 @@ import clsx from 'clsx';
 
 import { useAuthenticationStore } from '../store/authentication';
 
-import { siteConfig } from '@/config/site';
-import { ThemeSwitch } from '@/shared/components/theme-switch';
-import { TwitterIcon, GithubIcon, DiscordIcon, SearchIcon, Logo } from '@/shared/components/icons';
+import { siteConfigDashboard } from '@/config/siteDashboard';
+import { SearchIcon, Logo } from '@/shared/components/icons';
 
-export const Navbar = () => {
+export const NavbarDashboard = () => {
   const { isLogin, logout } = useAuthenticationStore();
   const searchInput = (
     <Input
@@ -54,9 +52,7 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) => {
-            // if (item.isProtected && !isLogin) return null;
-
+          {siteConfigDashboard.navItems.map((item) => {
             return (
               <NavbarItem key={item.href}>
                 <NextLink
@@ -76,7 +72,7 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="end">
-        <NavbarItem className="hidden sm:flex gap-2">
+        {/* <NavbarItem className="hidden sm:flex gap-2">
           <Link isExternal aria-label="Twitter" href={siteConfig.links.twitter}>
             <TwitterIcon className="text-default-500" />
           </Link>
@@ -88,7 +84,7 @@ export const Navbar = () => {
           </Link>
           <ThemeSwitch />
         </NavbarItem>
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
+        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem> */}
         <NavbarItem className="hidden md:flex">
           {isLogin ? (
             <Button className="text-sm font-normal text-default-600" variant="solid" onPress={logout}>
@@ -102,21 +98,21 @@ export const Navbar = () => {
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal aria-label="Github" href={siteConfig.links.github}>
+      {/* <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+        <Link isExternal aria-label="Github" href={siteConfigDashboard.links.github}>
           <GithubIcon className="text-default-500" />
         </Link>
         <ThemeSwitch />
         <NavbarMenuToggle />
-      </NavbarContent>
+      </NavbarContent> */}
 
       <NavbarMenu>
         {searchInput}
         <div className="mx-4 mt-2 flex flex-col gap-2">
-          {siteConfig.navMenuItems.map((item, index) => (
+          {siteConfigDashboard.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
-                color={index === 2 ? 'primary' : index === siteConfig.navMenuItems.length - 1 ? 'danger' : 'foreground'}
+                // color={index === 2 ? 'primary' : index === siteConfig.navMenuItems.length - 1 ? 'danger' : 'foreground'}
                 href="#"
                 size="lg"
               >
