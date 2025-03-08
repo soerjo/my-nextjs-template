@@ -1,27 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 
-import { useAuthenticaitionStore } from '../store/authentication';
+import { useAuthenticationStore } from '../store/authentication';
+import { useEffect, useState } from 'react';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { isLogin } = useAuthenticaitionStore();
+  const { isLogin } = useAuthenticationStore();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const token = Cookies.get('token');
-
-    if (!token) {
-      router.replace('/login'); // Redirect immediately
-    } else {
-      setLoading(false); // Allow page to render
+    setIsMounted(true); // Ensure client-side rendering
+    if (!isLogin) {
+      router.replace('/login');
     }
-  }, [isLogin]);
+  }, [isLogin, router]);
 
-  if (loading) return null; // Prevent rendering before redirect
-
+  if (!isMounted || !isLogin) return null;
   return <>{children}</>;
 }

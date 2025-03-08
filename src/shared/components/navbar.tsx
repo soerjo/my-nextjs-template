@@ -17,14 +17,14 @@ import { link as linkStyles } from '@heroui/theme';
 import NextLink from 'next/link';
 import clsx from 'clsx';
 
-import { useAuthenticaitionStore } from '../store/authentication';
+import { useAuthenticationStore } from '../store/authentication';
 
 import { siteConfig } from '@/config/site';
 import { ThemeSwitch } from '@/shared/components/theme-switch';
 import { TwitterIcon, GithubIcon, DiscordIcon, SearchIcon, Logo } from '@/shared/components/icons';
 
 export const Navbar = () => {
-  const { isLogin, logout } = useAuthenticaitionStore();
+  const {isLogin, logout} = useAuthenticationStore();
   const searchInput = (
     <Input
       aria-label="Search"
@@ -54,20 +54,23 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink
-                className={clsx(
-                  linkStyles({ color: 'foreground' }),
-                  'data-[active=true]:text-primary data-[active=true]:font-medium',
-                )}
-                color="foreground"
-                href={item.href}
-              >
-                {item.label}
-              </NextLink>
-            </NavbarItem>
-          ))}
+          {siteConfig.navItems.map((item) => {
+            if(item.isProtected && !isLogin) return null;
+            return (
+              <NavbarItem key={item.href}>
+                <NextLink
+                  className={clsx(
+                    linkStyles({ color: 'foreground' }),
+                    'data-[active=true]:text-primary data-[active=true]:font-medium',
+                  )}
+                  color="foreground"
+                  href={item.href}
+                >
+                  {item.label}
+                </NextLink>
+              </NavbarItem>
+            )
+          })}
         </ul>
       </NavbarContent>
 
