@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Navbar as HeroUINavbar,
   NavbarContent,
@@ -18,8 +20,10 @@ import clsx from 'clsx';
 import { siteConfig } from '@/config/site';
 import { ThemeSwitch } from '@/shared/components/theme-switch';
 import { TwitterIcon, GithubIcon, DiscordIcon, HeartFilledIcon, SearchIcon, Logo } from '@/shared/components/icons';
+import { useAuthenticaitionStore } from '../store/authentication';
 
 export const Navbar = () => {
+  const {isLogin, logout} = useAuthenticaitionStore();
   const searchInput = (
     <Input
       aria-label="Search"
@@ -81,16 +85,25 @@ export const Navbar = () => {
         </NavbarItem>
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
         <NavbarItem className="hidden md:flex">
+          {isLogin ? 
+        <Button
+            onPress={logout}
+            className="text-sm font-normal text-default-600"
+            variant="solid"
+          >
+            Logout
+          </Button>
+:
           <Button
             isExternal
             as={Link}
-            className="text-sm font-normal text-default-600 bg-default-100"
-            href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
-            variant="flat"
+            className="text-sm font-normal text-default-600"
+            href={'/login'}
+            variant="solid"
           >
-            Sponsor
+            Login
           </Button>
+          }
         </NavbarItem>
       </NavbarContent>
 
