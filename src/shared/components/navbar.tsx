@@ -92,7 +92,6 @@ export const Navbar = () => {
             </Button>
           ) : (
             <Button
-              isExternal
               as={Link}
               className="text-sm font-normal text-default-600"
               href={'/login'}
