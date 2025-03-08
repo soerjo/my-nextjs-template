@@ -1,8 +1,8 @@
 import Cookies from 'js-cookie';
 import { create } from 'zustand';
+import { useEffect } from 'react';
 
 import { ILoginResponse } from '@/types/authentication';
-import { useEffect } from 'react';
 
 interface IUserPayload {
   userId?: string;
@@ -26,14 +26,18 @@ export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
         secure: true,
         sameSite: 'Strict',
       });
-      Cookies.set('user', JSON.stringify({
-        userId: dto.userId,
-        email: dto.email,
-      }), {
-        expires: 1 / 3, // 8 hours
-        secure: true,
-        sameSite: 'Strict',
-      });
+      Cookies.set(
+        'user',
+        JSON.stringify({
+          userId: dto.userId,
+          email: dto.email,
+        }),
+        {
+          expires: 1 / 3, // 8 hours
+          secure: true,
+          sameSite: 'Strict',
+        },
+      );
 
       return {
         payload: {

@@ -24,7 +24,7 @@ import { ThemeSwitch } from '@/shared/components/theme-switch';
 import { TwitterIcon, GithubIcon, DiscordIcon, SearchIcon, Logo } from '@/shared/components/icons';
 
 export const Navbar = () => {
-  const {isLogin, logout} = useAuthenticationStore();
+  const { isLogin, logout } = useAuthenticationStore();
   const searchInput = (
     <Input
       aria-label="Search"
@@ -55,7 +55,8 @@ export const Navbar = () => {
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
           {siteConfig.navItems.map((item) => {
-            if(item.isProtected && !isLogin) return null;
+            if (item.isProtected && !isLogin) return null;
+
             return (
               <NavbarItem key={item.href}>
                 <NextLink
@@ -69,7 +70,7 @@ export const Navbar = () => {
                   {item.label}
                 </NextLink>
               </NavbarItem>
-            )
+            );
           })}
         </ul>
       </NavbarContent>
@@ -94,12 +95,7 @@ export const Navbar = () => {
               Logout
             </Button>
           ) : (
-            <Button
-              as={Link}
-              className="text-sm font-normal text-default-600"
-              href={'/login'}
-              variant="solid"
-            >
+            <Button as={Link} className="text-sm font-normal text-default-600" href={'/login'} variant="solid">
               Login
             </Button>
           )}

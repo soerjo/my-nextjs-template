@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 import { useAuthenticationStore } from '../store/authentication';
-import { useEffect, useState } from 'react';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { isLogin } = useAuthenticationStore();
@@ -18,5 +18,6 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }, [isLogin, router]);
 
   if (!isMounted || !isLogin) return null;
+
   return <>{children}</>;
 }
