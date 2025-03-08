@@ -16,7 +16,7 @@ interface IUserPayload {
 interface IAuthenticationState {
   payload: IUserPayload;
   isLogin: boolean;
-  login: (dto: ILoginResponse) => void;
+  login: (dto: ILoginResponse) => Promise<void>;
   logout: () => void;
   initializeAuth: () => void;
 }
@@ -31,25 +31,6 @@ export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
     });
     const userDetail = await getUserDetail();
 
-    set(() => ({
-      payload: {
-        userId: userDetail._id,
-        email: userDetail.email,
-        isAdmin: userDetail.isAdmin,
-        name: userDetail.name,
-      },
-      isLogin: true,
-    }));
-
-    console.log(
-      'userDetail',
-      JSON.stringify({
-        userId: userDetail._id,
-        email: userDetail.email,
-        isAdmin: userDetail.isAdmin,
-        name: userDetail.name,
-      }),
-    );
     Cookies.set(
       'user',
       JSON.stringify({
@@ -64,6 +45,16 @@ export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
         sameSite: 'Strict',
       },
     );
+
+    set(() => ({
+      payload: {
+        userId: userDetail._id,
+        email: userDetail.email,
+        isAdmin: userDetail.isAdmin,
+        name: userDetail.name,
+      },
+      isLogin: true,
+    }));
   },
   logout: () =>
     set(() => {
@@ -77,12 +68,9 @@ export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
     }),
   initializeAuth: () => {
     if (typeof window !== 'undefined') {
-      // Read cookies only on the client side
       const token = Cookies.get('token');
       const userData = Cookies.get('user');
       const initialPayload: IUserPayload = JSON.parse(userData ?? '{}');
-
-      console.log('initialPayload', initialPayload);
 
       set({
         isLogin: !!token,

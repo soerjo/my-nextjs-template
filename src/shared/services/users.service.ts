@@ -14,8 +14,6 @@ export const getUserDetail = async (): Promise<IUserDetailResponse> => {
       },
     });
 
-    console.log({ response: response.data });
-
     return response.data?.data;
   } catch (error: any) {
     throw new Error(error);

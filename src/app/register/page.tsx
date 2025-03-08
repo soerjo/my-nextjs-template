@@ -96,9 +96,7 @@ function FormRegisterBankLocation({ onSubmit }: { onSubmit: (e: React.FormEvent<
 }
 
 export default function ExamplePage() {
-  const { mutate: authLogin, isPending } = useAuthLogin();
-  const [isVisible, setIsVisible] = React.useState(false);
-  const toggleVisibility = () => setIsVisible(!isVisible);
+  const { mutate: authLogin } = useAuthLogin();
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

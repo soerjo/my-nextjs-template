@@ -11,10 +11,10 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true); // Ensure client-side rendering
     if (isMounted && !isLogin) {
       router.replace('/login');
     }
+    setIsMounted(true); // Ensure client-side rendering
   }, [isLogin, isMounted]);
 
   if (!isMounted || !isLogin) return null;

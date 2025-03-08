@@ -12,8 +12,6 @@ import { useAuthLogin } from '@/shared/hooks/authentication';
 
 export default function ExamplePage() {
   const { mutate: authLogin, isPending } = useAuthLogin();
-  const [isVisible, setIsVisible] = React.useState(false);
-  const toggleVisibility = () => setIsVisible(!isVisible);
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
