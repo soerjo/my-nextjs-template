@@ -1,6 +1,8 @@
-import { ILoginResponse } from '@/types/authentication';
 import Cookies from 'js-cookie';
 import { create } from 'zustand';
+import { useEffect } from 'react';
+
+import { ILoginResponse } from '@/types/authentication';
 
 interface IUserPayload {
   userId?: string;
@@ -12,18 +14,31 @@ interface IAuthenticationState {
   isLogin: boolean;
   login: (dto: ILoginResponse) => void;
   logout: () => void;
+  initializeAuth: () => void;
 }
-
-export const useAuthenticaitionStore = create<IAuthenticationState>((set) => ({
-  payload: {},
-  isLogin: false,
+export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
+  payload: {}, // Default empty payload
+  isLogin: false, // Assume logged out initially
   login: (dto) =>
     set(() => {
       Cookies.set('token', dto.token!, {
-        expires: 1 / 3, // 8 hours (1/3 of a day)
-        secure: true, // Ensure HTTPS is used
+        expires: 1 / 3, // 8 hours
+        secure: true,
         sameSite: 'Strict',
       });
+      Cookies.set(
+        'user',
+        JSON.stringify({
+          userId: dto.userId,
+          email: dto.email,
+        }),
+        {
+          expires: 1 / 3, // 8 hours
+          secure: true,
+          sameSite: 'Strict',
+        },
+      );
+
       return {
         payload: {
           userId: dto.userId,
@@ -35,9 +50,33 @@ export const useAuthenticaitionStore = create<IAuthenticationState>((set) => ({
   logout: () =>
     set(() => {
       Cookies.remove('token');
+      Cookies.remove('user');
+
       return {
         payload: {},
         isLogin: false,
       };
     }),
+  initializeAuth: () => {
+    if (typeof window !== 'undefined') {
+      // Read cookies only on the client side
+      const token = Cookies.get('token');
+      const userData = Cookies.get('user');
+      const initialPayload: IUserPayload = userData ? JSON.parse(userData) : {};
+
+      set({
+        isLogin: !!token,
+        payload: initialPayload,
+      });
+    }
+  },
 }));
+
+// Hook to call `initializeAuth` on mount
+export const useInitializeAuth = () => {
+  const initializeAuth = useAuthenticationStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+};

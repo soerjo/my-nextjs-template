@@ -20,9 +20,7 @@ export const getUsers = async (params?: string): Promise<Post[]> => {
         resolve(response.data);
       }, 5000);
     });
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-
-    return [];
+  } catch (error: any) {
+    throw new Error(error);
   }
 };

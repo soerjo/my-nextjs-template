@@ -1,5 +1,3 @@
-import { Navbar } from '@/shared/components/navbar';
-
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>

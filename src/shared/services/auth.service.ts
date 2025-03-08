@@ -1,3 +1,5 @@
+import axios, { AxiosError, AxiosResponse } from 'axios';
+
 import {
   IForgotRequest,
   IForgotResponse,
@@ -6,7 +8,6 @@ import {
   ISignUpRequest,
   ISignUpResponse,
 } from '@/types/authentication';
-import axios, { AxiosError, AxiosResponse } from 'axios';
 
 const BASE_URL = 'https://bash-phi.vercel.app/api';
 
@@ -19,10 +20,10 @@ export const authLogin = async (dto: ILoginRequest): Promise<ILoginResponse> => 
 
     return response.data;
   } catch (error: any) {
-    if(error instanceof AxiosError) {
-        throw new Error(error?.response?.data?.message ?? 'Something went wrong');
-    }else{
-        throw new Error(error);
+    if (error instanceof AxiosError) {
+      throw new Error(error?.response?.data?.message ?? 'Something went wrong');
+    } else {
+      throw new Error(error);
     }
   }
 };
@@ -37,10 +38,10 @@ export const authForgot = async (dto: IForgotRequest): Promise<IForgotResponse> 
 
     return response.data;
   } catch (error: any) {
-    if(error instanceof AxiosError) {
-        throw new Error(error?.response?.data?.message ?? 'Something went wrong');
-    }else{
-        throw new Error(error);
+    if (error instanceof AxiosError) {
+      throw new Error(error?.response?.data?.message ?? 'Something went wrong');
+    } else {
+      throw new Error(error);
     }
   }
 };
@@ -55,10 +56,10 @@ export const authSignUp = async (dto: ISignUpRequest): Promise<ISignUpResponse> 
 
     return response.data;
   } catch (error: any) {
-    if(error instanceof AxiosError) {
-        throw new Error(error?.response?.data?.message ?? 'Something went wrong');
-    }else{
-        throw new Error(error);
+    if (error instanceof AxiosError) {
+      throw new Error(error?.response?.data?.message ?? 'Something went wrong');
+    } else {
+      throw new Error(error);
     }
   }
 };
