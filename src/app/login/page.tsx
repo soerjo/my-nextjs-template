@@ -6,20 +6,22 @@ import { Form } from '@heroui/form';
 import { Image } from '@heroui/image';
 import { Input } from '@heroui/input';
 import { Link } from '@heroui/link';
-import { EyeFilledIcon, EyeSlashFilledIcon } from '@/shared/components/icon/eyePassword';
 import { Button } from '@heroui/button';
+
+import { EyeFilledIcon, EyeSlashFilledIcon } from '@/shared/components/icon/eyePassword';
 import { useAuthLogin } from '@/shared/hooks/authentication';
 
 export default function ExamplePage() {
   const { mutate: authLogin, isPending } = useAuthLogin();
   const [isVisible, setIsVisible] = React.useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
-  
+
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData) as { email: string; password: string };
-    authLogin({email: data.email, password: data.password});
+
+    authLogin({ email: data.email, password: data.password });
   };
 
   return (
@@ -41,21 +43,14 @@ export default function ExamplePage() {
         <Form className="flex flex-col gap-4 mb-8" validationBehavior="aria" onSubmit={onSubmit}>
           <Input
             id="email"
-            name="email"
             label="Email"
-            variant="bordered"
             labelPlacement="outside"
+            name="email"
             placeholder="Enter your email"
             type="email"
+            variant="bordered"
           />
           <Input
-            id="password"
-            name="password"
-            label="Password"
-            variant="bordered"
-            labelPlacement="outside"
-            placeholder="Enter your password"
-            type={isVisible ? 'text' : 'password'}
             endContent={
               <button
                 aria-label="toggle password visibility"
@@ -70,14 +65,23 @@ export default function ExamplePage() {
                 )}
               </button>
             }
+            id="password"
+            label="Password"
+            labelPlacement="outside"
+            name="password"
+            placeholder="Enter your password"
+            type={isVisible ? 'text' : 'password'}
+            variant="bordered"
           />
-          <Button color="primary" type="submit" isDisabled={isPending} fullWidth>
+          <Button fullWidth color="primary" isDisabled={isPending} type="submit">
             Submit
           </Button>
         </Form>
       </CardBody>
       <CardFooter className="flex flex-col gap-2 justify-center items-center">
-        <p>Don't have an account? <Link href="/signup">Register here</Link></p>
+        <p>
+          {"Don't have an account?"} <Link href="/signup">Register here</Link>
+        </p>
         <Link href="https://github.com/heroui-inc/heroui">forgot password?</Link>
       </CardFooter>
     </Card>

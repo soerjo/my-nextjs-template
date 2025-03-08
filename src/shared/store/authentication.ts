@@ -1,6 +1,7 @@
-import { ILoginResponse } from '@/types/authentication';
 import Cookies from 'js-cookie';
 import { create } from 'zustand';
+
+import { ILoginResponse } from '@/types/authentication';
 
 interface IUserPayload {
   userId?: string;
@@ -24,6 +25,7 @@ export const useAuthenticaitionStore = create<IAuthenticationState>((set) => ({
         secure: true, // Ensure HTTPS is used
         sameSite: 'Strict',
       });
+
       return {
         payload: {
           userId: dto.userId,
@@ -35,6 +37,7 @@ export const useAuthenticaitionStore = create<IAuthenticationState>((set) => ({
   logout: () =>
     set(() => {
       Cookies.remove('token');
+
       return {
         payload: {},
         isLogin: false,

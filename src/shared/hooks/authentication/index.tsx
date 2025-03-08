@@ -1,12 +1,13 @@
-import { authForgot, authLogin, authSignUp } from '@/shared/services/auth.service';
-import { useAuthenticaitionStore } from '@/shared/store/authentication';
-import { IForgotRequest, ILoginRequest, ISignUpRequest } from '@/types/authentication';
 import { addToast } from '@heroui/toast';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
+import { authForgot, authLogin, authSignUp } from '@/shared/services/auth.service';
+import { useAuthenticaitionStore } from '@/shared/store/authentication';
+import { IForgotRequest, ILoginRequest, ISignUpRequest } from '@/types/authentication';
+
 export const useAuthLogin = () => {
-    const router = useRouter();
+  const router = useRouter();
   const { login } = useAuthenticaitionStore();
 
   return useMutation({
@@ -20,7 +21,6 @@ export const useAuthLogin = () => {
         variant: 'flat',
       });
       router.push('/dashboard');
-
     },
     onError: (error) => {
       addToast({

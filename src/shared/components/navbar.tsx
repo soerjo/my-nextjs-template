@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   Navbar as HeroUINavbar,
@@ -17,13 +17,14 @@ import { link as linkStyles } from '@heroui/theme';
 import NextLink from 'next/link';
 import clsx from 'clsx';
 
-import { siteConfig } from '@/config/site';
-import { ThemeSwitch } from '@/shared/components/theme-switch';
-import { TwitterIcon, GithubIcon, DiscordIcon, HeartFilledIcon, SearchIcon, Logo } from '@/shared/components/icons';
 import { useAuthenticaitionStore } from '../store/authentication';
 
+import { siteConfig } from '@/config/site';
+import { ThemeSwitch } from '@/shared/components/theme-switch';
+import { TwitterIcon, GithubIcon, DiscordIcon, SearchIcon, Logo } from '@/shared/components/icons';
+
 export const Navbar = () => {
-  const {isLogin, logout} = useAuthenticaitionStore();
+  const { isLogin, logout } = useAuthenticaitionStore();
   const searchInput = (
     <Input
       aria-label="Search"
@@ -85,25 +86,21 @@ export const Navbar = () => {
         </NavbarItem>
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
         <NavbarItem className="hidden md:flex">
-          {isLogin ? 
-        <Button
-            onPress={logout}
-            className="text-sm font-normal text-default-600"
-            variant="solid"
-          >
-            Logout
-          </Button>
-:
-          <Button
-            isExternal
-            as={Link}
-            className="text-sm font-normal text-default-600"
-            href={'/login'}
-            variant="solid"
-          >
-            Login
-          </Button>
-          }
+          {isLogin ? (
+            <Button className="text-sm font-normal text-default-600" variant="solid" onPress={logout}>
+              Logout
+            </Button>
+          ) : (
+            <Button
+              isExternal
+              as={Link}
+              className="text-sm font-normal text-default-600"
+              href={'/login'}
+              variant="solid"
+            >
+              Login
+            </Button>
+          )}
         </NavbarItem>
       </NavbarContent>
 
