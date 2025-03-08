@@ -2,53 +2,69 @@ import Cookies from 'js-cookie';
 import { create } from 'zustand';
 import { useEffect } from 'react';
 
+import { getUserDetail } from '../services/users.service';
+
 import { ILoginResponse } from '@/types/authentication';
 
 interface IUserPayload {
   userId?: string;
   email?: string;
+  isAdmin?: boolean;
+  name?: string;
 }
 
 interface IAuthenticationState {
   payload: IUserPayload;
   isLogin: boolean;
-  isLoading: boolean;
   login: (dto: ILoginResponse) => void;
   logout: () => void;
   initializeAuth: () => void;
 }
 export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
-  payload: {}, // Default empty payload
-  isLogin: false, // Assume logged out initially
-  isLoading: false,
-  login: (dto) =>
-    set(() => {
-      Cookies.set('token', dto.token!, {
+  payload: {},
+  isLogin: false,
+  login: async (dto) => {
+    Cookies.set('token', dto.token!, {
+      expires: 1 / 3, // 8 hours
+      secure: true,
+      sameSite: 'Strict',
+    });
+    const userDetail = await getUserDetail();
+
+    set(() => ({
+      payload: {
+        userId: userDetail._id,
+        email: userDetail.email,
+        isAdmin: userDetail.isAdmin,
+        name: userDetail.name,
+      },
+      isLogin: true,
+    }));
+
+    console.log(
+      'userDetail',
+      JSON.stringify({
+        userId: userDetail._id,
+        email: userDetail.email,
+        isAdmin: userDetail.isAdmin,
+        name: userDetail.name,
+      }),
+    );
+    Cookies.set(
+      'user',
+      JSON.stringify({
+        userId: userDetail._id,
+        email: userDetail.email,
+        isAdmin: userDetail.isAdmin,
+        name: userDetail.name,
+      }),
+      {
         expires: 1 / 3, // 8 hours
         secure: true,
         sameSite: 'Strict',
-      });
-      Cookies.set(
-        'user',
-        JSON.stringify({
-          userId: dto.userId,
-          email: dto.email,
-        }),
-        {
-          expires: 1 / 3, // 8 hours
-          secure: true,
-          sameSite: 'Strict',
-        },
-      );
-
-      return {
-        payload: {
-          userId: dto.userId,
-          email: dto.email,
-        },
-        isLogin: true,
-      };
-    }),
+      },
+    );
+  },
   logout: () =>
     set(() => {
       Cookies.remove('token');
@@ -64,15 +80,14 @@ export const useAuthenticationStore = create<IAuthenticationState>((set) => ({
       // Read cookies only on the client side
       const token = Cookies.get('token');
       const userData = Cookies.get('user');
-      const initialPayload: IUserPayload = userData ? JSON.parse(userData) : {};
+      const initialPayload: IUserPayload = JSON.parse(userData ?? '{}');
+
+      console.log('initialPayload', initialPayload);
 
       set({
         isLogin: !!token,
         payload: initialPayload,
-        isLoading: false,
       });
-    } else {
-      set({ isLoading: true });
     }
   },
 }));

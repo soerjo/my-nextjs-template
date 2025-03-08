@@ -7,7 +7,7 @@ export const siteConfigDashboard = {
   navItems: [
     {
       label: 'Dashboard',
-      href: '/',
+      href: '/dashboard',
     },
     {
       label: 'Transaksi',

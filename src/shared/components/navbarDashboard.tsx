@@ -7,8 +7,8 @@ import {
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
+  NavbarMenuToggle,
 } from '@heroui/navbar';
-import { Button } from '@heroui/button';
 import { Kbd } from '@heroui/kbd';
 import { Link } from '@heroui/link';
 import { Input } from '@heroui/input';
@@ -16,13 +16,13 @@ import { link as linkStyles } from '@heroui/theme';
 import NextLink from 'next/link';
 import clsx from 'clsx';
 
-import { useAuthenticationStore } from '../store/authentication';
+import { ThemeSwitch } from './theme-switch';
+import UserAvatar from './userAvatar';
 
 import { siteConfigDashboard } from '@/config/siteDashboard';
 import { SearchIcon, Logo } from '@/shared/components/icons';
 
 export const NavbarDashboard = () => {
-  const { isLogin, logout } = useAuthenticationStore();
   const searchInput = (
     <Input
       aria-label="Search"
@@ -48,7 +48,7 @@ export const NavbarDashboard = () => {
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
             <Logo />
-            <p className="font-bold text-inherit">ACME</p>
+            <p className="font-bold text-inherit">Bash App</p>
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
@@ -82,10 +82,11 @@ export const NavbarDashboard = () => {
           <Link isExternal aria-label="Github" href={siteConfig.links.github}>
             <GithubIcon className="text-default-500" />
           </Link>
-          <ThemeSwitch />
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem> */}
-        <NavbarItem className="hidden md:flex">
+          </NavbarItem>*/}
+        <UserAvatar />
+        <ThemeSwitch />
+        {/* <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>  */}
+        {/* <NavbarItem className="hidden md:flex">
           {isLogin ? (
             <Button className="text-sm font-normal text-default-600" variant="solid" onPress={logout}>
               Logout
@@ -95,16 +96,16 @@ export const NavbarDashboard = () => {
               Login
             </Button>
           )}
-        </NavbarItem>
+        </NavbarItem> */}
       </NavbarContent>
 
-      {/* <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal aria-label="Github" href={siteConfigDashboard.links.github}>
+      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+        {/* <Link isExternal aria-label="Github" href={siteConfigDashboard.links.github}>
           <GithubIcon className="text-default-500" />
-        </Link>
+        </Link> */}
         <ThemeSwitch />
         <NavbarMenuToggle />
-      </NavbarContent> */}
+      </NavbarContent>
 
       <NavbarMenu>
         {searchInput}

@@ -1,13 +1,20 @@
 'use client';
 
-import { CustomSection } from '@/shared/components/page/example/customSection';
-import { title } from '@/shared/components/primitives';
+import { useListCustomers } from '@/shared/hooks/customers/useListCustomer';
 
 export default function DashboardPage() {
+  const { data, isLoading, isError } = useListCustomers();
+
+  console.log({ data });
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error</div>;
+
   return (
-    <div>
-      <h1 className={title()}>Dashboard</h1>
-      <CustomSection />
-    </div>
+    <>
+      {JSON.stringify(data)}
+      {/* <DashboardComponent /> */}
+      {/* <h1 className={title()}>Dashboard</h1> */}
+      {/* <CustomSection /> */}
+    </>
   );
 }

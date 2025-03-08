@@ -1,13 +1,8 @@
-import { Link } from '@heroui/link';
 import { Snippet } from '@heroui/snippet';
 import { Code } from '@heroui/code';
-import { button as buttonStyles } from '@heroui/theme';
 
-import { siteConfig } from '@/config/site';
 import { title, subtitle } from '@/shared/components/primitives';
-import { GithubIcon } from '@/shared/components/icons';
 import { Navbar } from '@/shared/components/navbar';
-import { CustomButton } from '@/shared/components/customButton';
 
 export default function Home() {
   return (
@@ -22,7 +17,7 @@ export default function Home() {
           <div className={subtitle({ class: 'mt-4' })}>Beautiful, fast and modern React UI library.</div>
         </div>
 
-        <div className="flex gap-3">
+        {/* <div className="flex gap-3">
           <CustomButton />
           <Link
             isExternal
@@ -32,7 +27,7 @@ export default function Home() {
             <GithubIcon size={20} />
             GitHub
           </Link>
-        </div>
+        </div> */}
 
         <div className="mt-8">
           <Snippet hideCopyButton hideSymbol variant="bordered">
