@@ -82,7 +82,7 @@ export default function ExamplePage() {
       </CardBody>
       <CardFooter className="flex flex-col gap-2 justify-center items-center">
         <p>
-          {"Don't have an account?"} <Link href="/signup">Register here</Link>
+          {"Don't have an account?"} <Link href="/register">Register here</Link>
         </p>
         <Link href="/forgot">forgot password?</Link>
       </CardFooter>

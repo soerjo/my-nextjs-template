@@ -2,112 +2,269 @@
 
 import React from 'react';
 import { Card, CardBody, CardFooter, CardHeader } from '@heroui/card';
-import { Form } from '@heroui/form';
 import { Image } from '@heroui/image';
 import { Input } from '@heroui/input';
 import { Link } from '@heroui/link';
 import { Button } from '@heroui/button';
 import { Tabs, Tab } from '@heroui/tabs';
+import { Textarea } from '@heroui/input';
 
-import { useAuthLogin } from '@/shared/hooks/authentication';
+import { Autocomplete, AutocompleteItem } from '@heroui/autocomplete';
+import useProvincesData from '@/shared/hooks/regencies/useProvincesData';
+import { InputPassword } from '@/shared/components/inputPassword';
 
-function FormRegisterUser({ onSubmit }: { onSubmit: (e: React.FormEvent<HTMLFormElement>) => void }) {
+import { Controller, FieldErrors, SubmitHandler, useForm, UseFormRegister } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { useRegisterFormStore } from '@/shared/store/registerFormStore';
+import { Form } from '@heroui/form';
+
+const schema = yup
+  .object({
+    username: yup.string().required(),
+    email: yup.string().email().required(),
+    phone_number: yup
+      .string()
+      .matches(/^[0-9]+$/, 'Phone number must contain only digits')
+      .required(),
+    password: yup.string().required(),
+    confirm_password: yup
+      .string()
+      .oneOf([yup.ref('password')], 'Passwords must match')
+      .required(),
+  })
+  .required();
+
+function FormRegisterUser() {
+  const { payload, onSubmit } = useRegisterFormStore();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ defaultValues: { ...payload }, resolver: yupResolver(schema) });
+
   return (
-    <Form className="flex flex-col gap-4 mb-8" validationBehavior="aria" onSubmit={onSubmit}>
+    <Form className="relative flex flex-col min-h-[490px] pb-[50px] gap-4" onSubmit={handleSubmit(onSubmit)}>
+      <Input
+        id="username"
+        label="Username"
+        labelPlacement="outside"
+        placeholder="Enter your username"
+        variant="bordered"
+        {...register('username')}
+        errorMessage={errors['username']?.message}
+        isInvalid={!!errors['username']?.message}
+      />
       <Input
         id="email"
         label="Email"
         labelPlacement="outside"
-        name="email"
         placeholder="Enter your email"
         type="email"
         variant="bordered"
+        {...register('email')}
+        errorMessage={errors['email']?.message}
+        isInvalid={!!errors['email']?.message}
       />
       <Input
-        endContent={
-          <button
-            aria-label="toggle password visibility"
-            className="focus:outline-none"
-            type="button"
-            // onClick={toggleVisibility}
-          >
-            {/* {isVisible ? (
-            <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-          ) : (
-            <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-          )} */}
-          </button>
-        }
+        id="phone number"
+        label="Phone Number"
+        labelPlacement="outside"
+        placeholder="Enter your phone number"
+        variant="bordered"
+        {...register('phone_number')}
+        errorMessage={errors['phone_number']?.message}
+        isInvalid={!!errors['phone_number']?.message}
+      />
+      <InputPassword
         id="password"
         label="Password"
         labelPlacement="outside"
-        name="password"
         placeholder="Enter your password"
-        // type={isVisible ? 'text' : 'password'}
         variant="bordered"
+        {...register('password')}
+        errorMessage={errors['password']?.message}
+        isInvalid={!!errors['password']?.message}
       />
-      <Button fullWidth color="primary" type="submit">
-        Submit
+      <InputPassword
+        id="confirm password"
+        label="Confirm Password"
+        labelPlacement="outside"
+        placeholder="Confirm your confirm password"
+        variant="bordered"
+        {...register('confirm_password')}
+        errorMessage={errors['confirm_password']?.message}
+        isInvalid={!!errors['confirm_password']?.message}
+      />
+
+      <Button fullWidth color="primary" className="absolute bottom-0" type="submit">
+        {'Next'}
       </Button>
     </Form>
   );
 }
 
-function FormRegisterBankLocation({ onSubmit }: { onSubmit: (e: React.FormEvent<HTMLFormElement>) => void }) {
+const schemaLocation = yup
+  .object({
+    provincie: yup.string().required(),
+    regency: yup.string().required(),
+    district: yup.string().required(),
+    village: yup.string().required(),
+    address: yup.string().required(),
+  })
+  .required();
+
+function FormRegisterBankLocation() {
+  const {  onSubmitLocation } = useRegisterFormStore();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = useForm({ 
+    resolver: yupResolver(schemaLocation),
+  });
+
+  const [selectedProvince, setSelectedProvince] = React.useState({
+    provicieId: '',
+    regencyId: '',
+    districtId: '',
+    villageId: '',
+  });
+  const { getListDistricts, getListProvinces, getListRegencies, getListVillages } = useProvincesData();
+
   return (
-    <Form className="flex flex-col gap-4 mb-8" validationBehavior="aria" onSubmit={onSubmit}>
-      <Input
-        id="email"
-        label="Email"
-        labelPlacement="outside"
-        name="email"
-        placeholder="Enter your email"
-        type="email"
-        variant="bordered"
-      />
-      <Input
-        endContent={
-          <button
-            aria-label="toggle password visibility"
-            className="focus:outline-none"
-            type="button"
-            // onClick={toggleVisibility}
+    <Form className="relative flex flex-col min-h-[490px] pb-[50px] gap-4" onSubmit={handleSubmit(onSubmitLocation)}>
+      <Controller
+        name="provincie"
+        control={control}
+        render={({ field: { onChange, ...controllerProps } }) => (
+          <Autocomplete
+            {...controllerProps}
+            label="Provinsi"
+            labelPlacement="outside"
+            placeholder="Search Provinsi"
+            variant="bordered"
+            defaultItems={getListProvinces()}
+            onSelectionChange={(data) => {
+              onChange(data);
+              setSelectedProvince(prev => ({...prev, provicieId: data as string}));
+            }}
+            // onSelectionChange={(val)=> }
+            // {...register('provincie')}
+            errorMessage={errors['provincie']?.message}
+            isInvalid={!!errors['provincie']?.message}
           >
-            {/* {isVisible ? (
-            <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-          ) : (
-            <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-          )} */}
-          </button>
-        }
-        id="password"
-        label="Password"
-        labelPlacement="outside"
-        name="password"
-        placeholder="Enter your password"
-        // type={isVisible ? 'text' : 'password'}
-        variant="bordered"
+            {(location) => <AutocompleteItem key={location.value}>{location.label}</AutocompleteItem>}
+          </Autocomplete>
+        )}
       />
-      <Button fullWidth color="primary" type="submit">
-        Submit
+      <Controller
+        name="regency"
+        control={control}
+        render={({ field: { onChange, ...controllerProps } }) => (
+          <Autocomplete
+            {...controllerProps}
+            label="Kabupatien/Kota"
+            labelPlacement="outside"
+            placeholder="Search Kabupaten/Kota"
+            variant="bordered"
+            defaultItems={getListRegencies(selectedProvince.provicieId)}
+            onSelectionChange={(data) => {
+              onChange(data);
+              setSelectedProvince(prev => ({...prev, regencyId: data as string}))
+            }}
+            // onSelectionChange={(val)=> }
+            // {...register('provincie')}
+            errorMessage={errors['regency']?.message}
+            isInvalid={!!errors['regency']?.message}
+          >
+            {(location) => <AutocompleteItem key={location.value}>{location.label}</AutocompleteItem>}
+          </Autocomplete>
+        )}
+      />
+      <Controller
+        name="district"
+        control={control}
+        render={({ field: { onChange, ...controllerProps } }) => (
+          <Autocomplete
+            {...controllerProps}
+            label="Kecamatan"
+            labelPlacement="outside"
+            placeholder="Search Kecamatan"
+            variant="bordered"
+            defaultItems={getListDistricts(selectedProvince.regencyId)}
+            onSelectionChange={(data) => {
+              onChange(data);
+              setSelectedProvince(prev => ({...prev, districtId: data as string}))
+            }}
+            // onSelectionChange={(val)=> }
+            // {...register('provincie')}
+            errorMessage={errors['district']?.message}
+            isInvalid={!!errors['district']?.message}
+          >
+            {(location) => <AutocompleteItem key={location.value}>{location.label}</AutocompleteItem>}
+          </Autocomplete>
+        )}
+      />
+      <Controller
+        name="village"
+        control={control}
+        render={({ field: { onChange, ...controllerProps } }) => (
+          <Autocomplete
+            {...controllerProps}
+            label="Kelurahan"
+            labelPlacement="outside"
+            placeholder="Search Kelurahan"
+            variant="bordered"
+            defaultItems={getListVillages(selectedProvince.districtId)}
+            onSelectionChange={(data) => onChange(data)}
+            // onSelectionChange={(val)=> setSelectedProvince(prev => ({...prev, provicieId: val as string}))}
+            // {...register('provincie')}
+            errorMessage={errors['village']?.message}
+            isInvalid={!!errors['village']?.message}
+          >
+            {(location) => <AutocompleteItem key={location.value}>{location.label}</AutocompleteItem>}
+          </Autocomplete>
+        )}
+      />
+
+      <Textarea
+        label="Alamat"
+        labelPlacement="outside"
+        placeholder="Alamat lokasi bank"
+        variant="bordered"
+        {...register('address')}
+        errorMessage={errors['address']?.message}
+        isInvalid={!!errors['address']?.message}
+      />
+
+      <Button fullWidth color="primary" className="absolute bottom-0" type="submit">
+        {'Submit'}
       </Button>
     </Form>
   );
 }
+
+const stepperItems = [
+  {
+    id: 'register-user',
+    label: 'Register User',
+    Content: FormRegisterUser,
+  },
+  {
+    id: 'register-bank-location',
+    label: 'Register Bank Location',
+    Content: FormRegisterBankLocation,
+  },
+];
 
 export default function ExamplePage() {
-  const { mutate: authLogin } = useAuthLogin();
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData) as { email: string; password: string };
-
-    authLogin({ email: data.email, password: data.password });
-  };
+  const [stepTab, setStepTab] = React.useState(stepperItems[0].id);
+  const { stepRegisterId, setStepRegisterId } = useRegisterFormStore();
 
   return (
-    <Card className="max-w-[400px] w-[380px] p-2">
+    <Card className="max-w-[400px] w-[420px] p-2">
       <CardHeader className="flex gap-3">
         <Link href="/">
           <Image
@@ -124,35 +281,24 @@ export default function ExamplePage() {
         </div>
       </CardHeader>
       <CardBody>
-        <div className="flex w-full flex-col">
-          <Tabs
-            aria-label="Dynamic tabs"
-            items={[
-              {
-                id: 'register-user',
-                label: 'Register User',
-                Content: FormRegisterUser,
-              },
-              {
-                id: 'register-bank-location',
-                label: 'Register Bank Location',
-                Content: FormRegisterBankLocation,
-              },
-            ]}
-          >
-            {(item) => (
-              <Tab key={item.id} title={item.label}>
-                <Card>
-                  <item.Content onSubmit={onSubmit} />
-                </Card>
-              </Tab>
-            )}
-          </Tabs>
-        </div>
+        <Tabs
+          aria-label="Dynamic tabs"
+          items={stepperItems}
+          selectedKey={stepperItems[stepRegisterId].id}
+          onSelectionChange={(key) => {
+            setStepRegisterId(stepperItems.findIndex((item) => item.id === key));
+          }}
+        >
+          {(item) => (
+            <Tab key={item.id} title={item.label} className="w-full">
+              <item.Content />
+            </Tab>
+          )}
+        </Tabs>
       </CardBody>
       <CardFooter className="flex flex-col gap-2 justify-center items-center">
         <p>
-          {"Don't have an account?"} <Link href="/signup">Register here</Link>
+          {"Already have an acount,"} <Link href="/login">Login here</Link>
         </p>
         <Link href="/forgot">forgot password?</Link>
       </CardFooter>
