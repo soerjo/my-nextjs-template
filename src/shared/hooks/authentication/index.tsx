@@ -12,8 +12,8 @@ export const useAuthLogin = () => {
 
   return useMutation({
     mutationFn: (params: ILoginRequest) => authLogin(params),
-    onSuccess: (data) => {
-      login(data);
+    onSuccess: async (data) => {
+      await login(data);
       addToast({
         title: 'Success',
         description: 'You have successfully logged in',

@@ -27,13 +27,15 @@ export default function ExamplePage() {
   return (
     <Card className="max-w-[400px] w-[380px] p-2">
       <CardHeader className="flex gap-3">
-        <Image
-          alt="heroui logo"
-          height={40}
-          radius="sm"
-          src="https://avatars.githubusercontent.com/u/86160567?s=200&v=4"
-          width={40}
-        />
+        <Link href="/">
+          <Image
+            alt="heroui logo"
+            height={40}
+            radius="sm"
+            src="https://avatars.githubusercontent.com/u/86160567?s=200&v=4"
+            width={40}
+          />
+        </Link>
         <div className="flex flex-col">
           <p className="text-md">Login to Bash App</p>
           <p className="text-small text-default-500">by budimind.com</p>
@@ -80,9 +82,9 @@ export default function ExamplePage() {
       </CardBody>
       <CardFooter className="flex flex-col gap-2 justify-center items-center">
         <p>
-          {"Don't have an account?"} <Link href="/signup">Register here</Link>
+          {"Don't have an account?"} <Link href="/register">Register here</Link>
         </p>
-        <Link href="https://github.com/heroui-inc/heroui">forgot password?</Link>
+        <Link href="/forgot">forgot password?</Link>
       </CardFooter>
     </Card>
   );
