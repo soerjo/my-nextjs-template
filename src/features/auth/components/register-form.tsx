@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -8,19 +8,16 @@ import { Card, CardHeader, CardContent, Input, Button, Spinner } from "@heroui/r
 import { registerSchema, type RegisterFormValues } from "@/features/auth/types";
 import { useRegister } from "@/features/auth/hooks";
 import { AppLink, PasswordInput } from "@/components/ui";
+import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
 import { ApiError } from "@/lib";
 
 export function RegisterForm() {
-  const { register: registerUser, isLoading, error } = useRegister();
+  const { register: registerUser, isLoading } = useRegister();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [success, setSuccess] = useState(false);
   const [apiErrMsg, setApiErrMsg] = useState<string>("");
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const {
     register,
@@ -43,11 +40,11 @@ export function RegisterForm() {
       await registerUser(data);
       setSuccess(true);
       router.push(ROUTES.login);
-    } catch(error: any) {
-      if(error instanceof ApiError) {
-        if(error.status == 400) {
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status == 400) {
           const errorMessage = error.message;
-          const errorResponse: ApiError = JSON.parse(errorMessage);
+          const errorResponse = JSON.parse(errorMessage) as ApiError;
           setApiErrMsg(errorResponse.message);
         }
       }

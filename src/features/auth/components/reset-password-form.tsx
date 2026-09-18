@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
@@ -8,19 +8,16 @@ import { Card, CardHeader, CardContent, Button, Spinner } from "@heroui/react";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "@/features/auth/types";
 import { useResetPassword } from "@/features/auth/hooks";
 import { AppLink, PasswordInput } from "@/components/ui";
+import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
 
 export function ResetPasswordForm() {
   const { resetPassword, isLoading } = useResetPassword();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [isSuccess, setIsSuccess] = useState(false);
   const [isApiError, setIsApiError] = useState(false);
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const {
     register,

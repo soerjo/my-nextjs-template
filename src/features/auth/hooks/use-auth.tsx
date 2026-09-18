@@ -1,21 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/react";
 import { useAuth as useAuthContext } from "@/features/auth/providers/auth-provider";
+import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
 
 export function useAuth() {
   return useAuthContext();
-}
-
-function useIsMounted() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  return mounted;
 }
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
