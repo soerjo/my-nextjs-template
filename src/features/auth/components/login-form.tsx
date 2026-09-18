@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardHeader, CardContent, Input, Button, Spinner } from "@heroui/react";
 import { loginSchema, type LoginFormValues } from "@/features/auth/types";
 import { useLogin } from "@/features/auth/hooks";
 import { AppLink, PasswordInput } from "@/components/ui";
+import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
 
 export function LoginForm() {
-  const { login, isLoading, error } = useLogin();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { login, isLoading } = useLogin();
+  const mounted = useIsMounted();
 
   const {
     register,

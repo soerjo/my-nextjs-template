@@ -1,22 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardHeader, CardContent, Input, Button, Spinner } from "@heroui/react";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/features/auth/types";
 import { useForgotPassword } from "@/features/auth/hooks";
 import { AppLink } from "@/components/ui";
+import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
 
 export function ForgotPasswordForm() {
   const { forgotPassword, isLoading, error } = useForgotPassword();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [isSuccess, setIsSuccess] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const {
     register,

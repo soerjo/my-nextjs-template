@@ -12,6 +12,17 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Migrated from the removed legacy .eslintignore (unsupported by ESLint 9):
+    ".now/**",
+    "**/*.css",
+    ".changeset/**",
+    "dist/**",
+    "esm/**",
+    "public/**",
+    "tests/**",
+    "scripts/**",
+    "coverage/**",
+    ".DS_Store",
   ]),
 ]);
 
