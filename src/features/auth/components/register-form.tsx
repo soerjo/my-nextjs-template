@@ -41,11 +41,12 @@ export function RegisterForm() {
       setSuccess(true);
       router.push(ROUTES.login);
     } catch (error) {
-      if (error instanceof ApiError) {
-        if (error.status == 400) {
-          const errorMessage = error.message;
-          const errorResponse = JSON.parse(errorMessage) as ApiError;
-          setApiErrMsg(errorResponse.message);
+      if (error instanceof ApiError && error.status === 400) {
+        try {
+          const errorResponse = JSON.parse(error.message) as { message?: string };
+          setApiErrMsg(errorResponse.message ?? error.message);
+        } catch {
+          setApiErrMsg(error.message);
         }
       }
     }
