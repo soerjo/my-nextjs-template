@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ROUTES, API_ROUTES } from "@/constants";
 import { apiClient } from "@/lib";
+import { logger } from "@/lib/logger";
 import { TokenManager } from "@/features/auth/services/token-manager";
 import type { LoginResponse } from "@/features/auth/types";
 import type { ApiResponse } from "@/types";
@@ -15,6 +16,7 @@ interface AuthContextValue {
   isAuthLoading: boolean;
   logout: () => Promise<void>;
   error: Error | null;
+  accessToken: string | null;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -44,7 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     },
+    onError: (err) => {
+      logger.warn("Automatic token refresh failed", {
+        error: err instanceof Error ? err.message : String(err),
+        pathname,
+      });
+    },
   });
+
+  const refreshMutationRef = useRef(refreshTokenMutation);
+  useEffect(() => {
+    refreshMutationRef.current = refreshTokenMutation;
+  }, [refreshTokenMutation]);
 
   const logout = useCallback(async () => {
     TokenManager.clearTokens();
@@ -65,10 +78,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return isAuthLoading;
   }, [isAuthLoading]);
 
+  const accessToken = useMemo(() => TokenManager.getAccessToken(), [verifyTokenQuery.data]);
+
   const error = useMemo(() => {
     if (verifyTokenQuery.error) return verifyTokenQuery.error;
     return null;
   }, [verifyTokenQuery.error]);
+
+  useEffect(() => {
+    if (verifyTokenQuery.error) {
+      logger.error("Token verification failed", verifyTokenQuery.error, {
+        pathname,
+      });
+    }
+  }, [verifyTokenQuery.error, pathname]);
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated && pathname !== ROUTES.login && pathname !== ROUTES.register && pathname !== ROUTES.forgotPassword && pathname !== ROUTES.resetPassword) {
@@ -84,29 +107,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!token) return;
 
       const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
-      
+
       if (timeUntilExpiration <= 5 * 60 * 1000 && timeUntilExpiration > 0) {
-        refreshTokenMutation.mutate();
+        refreshMutationRef.current.mutate();
       }
     };
 
     const token = TokenManager.getAccessToken();
-    if (token) {
-      const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
-      const initialDelay = Math.max(0, timeUntilExpiration - 5 * 60 * 1000);
+    if (!token) return;
 
-      let intervalId: ReturnType<typeof setInterval> | undefined;
-      const timer = setTimeout(() => {
-        checkAndRefreshToken();
-        intervalId = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
-      }, initialDelay);
+    const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
+    const initialDelay = Math.max(0, timeUntilExpiration - 5 * 60 * 1000);
 
-      return () => {
-        clearTimeout(timer);
-        if (intervalId) clearInterval(intervalId);
-      };
-    }
-  }, [isAuthenticated, refreshTokenMutation]);
+    const intervalId = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+
+    const timer = setTimeout(() => {
+      checkAndRefreshToken();
+    }, initialDelay);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(intervalId);
+    };
+  }, [isAuthenticated]);
 
   const value = useMemo<AuthContextValue>(() => ({
     isAuthenticated,
@@ -114,7 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthLoading,
     logout,
     error,
-  }), [isAuthenticated, isLoading, isAuthLoading, logout, error]);
+    accessToken,
+  }), [isAuthenticated, isLoading, isAuthLoading, logout, error, accessToken]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,12 +1,16 @@
 import { TokenManager } from "@/features/auth/services/token-manager";
 import { API_ROUTES } from "@/constants";
+import { logger } from "./logger";
 
 type RequestOptions = {
   body?: string;
   headers?: Record<string, string>;
   skipAuth?: boolean;
   _retried?: boolean;
+  timeout?: number;
 };
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 type RefreshSubscriber = {
   resolve: () => void;
@@ -80,10 +84,12 @@ export class ApiClient {
       }
 
       return null;
-    } catch {
-      TokenManager.clearTokens();
-      return null;
-    }
+      } catch (error) {
+        logger.warn("Token refresh request failed", { error: error instanceof Error ? error.message : String(error) });
+        logger.info("Clearing tokens after failed token refresh");
+        TokenManager.clearTokens();
+        return null;
+      }
   }
 
   async request<T>(
@@ -95,26 +101,70 @@ export class ApiClient {
       headers: customHeaders,
       skipAuth = false,
       _retried = false,
+      timeout = DEFAULT_TIMEOUT_MS,
+      signal,
       ...rest
-    } = options;
+    }: (RequestInit & RequestOptions) = options;
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...rest,
-      headers: {
-        "Content-Type": "application/json",
-        ...this.getAuthHeaders(skipAuth),
-        ...customHeaders,
-      },
-      body,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort(new DOMException("Request timed out", "TimeoutError"));
+    }, timeout);
 
-    if (response.ok) {
-      return response.json() as Promise<T>;
+    const onExternalAbort = () => {
+      controller.abort(signal?.reason);
+    };
+    if (signal) {
+      if (signal.aborted) {
+        onExternalAbort();
+      } else {
+        signal.addEventListener("abort", onExternalAbort);
+      }
     }
 
+    const headers: Record<string, string> = {
+      ...this.getAuthHeaders(skipAuth),
+      ...customHeaders,
+    };
+    const hasBody = body !== undefined && body !== "";
+    if (hasBody) {
+      headers["Content-Type"] = customHeaders?.["Content-Type"] ?? "application/json";
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...rest,
+        headers,
+        body: hasBody ? body : undefined,
+        signal: controller.signal,
+      });
+
+      if (response.ok) {
+        const text = await response.text();
+        if (!text) {
+          return null as T;
+        }
+        return JSON.parse(text) as T;
+      }
+
+      return await this.handleErrorResponse<T>(response, endpoint, options, skipAuth, _retried);
+    } finally {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener("abort", onExternalAbort);
+    }
+  }
+
+  private async handleErrorResponse<T>(
+    response: Response,
+    endpoint: string,
+    options: RequestInit & RequestOptions,
+    skipAuth: boolean,
+    _retried: boolean,
+  ): Promise<T> {
     if (response.status === 401 && !skipAuth) {
       if (_retried) {
         TokenManager.clearTokens();
+        logger.warn("Token refresh retry exhausted, clearing tokens", { endpoint });
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("auth:unauthorized"));
         }
@@ -176,6 +226,7 @@ export class ApiClient {
 
     if (response.status === 403 && !skipAuth) {
       const errorText = await response.text();
+      logger.warn("Forbidden response", { endpoint, status: response.status });
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("auth:forbidden"));
       }
@@ -183,6 +234,7 @@ export class ApiClient {
     }
 
     const errorText = await response.text();
+    logger.warn("Request failed with non-OK response", { endpoint, status: response.status });
     throw new ApiError(response.status, errorText);
   }
 

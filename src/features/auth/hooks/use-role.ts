@@ -1,30 +1,44 @@
 "use client";
 
-import { TokenManager } from "@/features/auth/services/token-manager";
+import { useMemo } from "react";
+import { jwtDecode } from "jwt-decode";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
-export type Role = "ADMIN" | "USER" | "SYSTEM";
+export type RoleName = "ADMIN" | "USER" | "SYSTEM";
 
-const ROLES: readonly Role[] = ["ADMIN", "USER", "SYSTEM"] as const;
+/** @deprecated Use `RoleName` instead. Kept for backwards compatibility. */
+export type Role = RoleName;
 
-function parseRole(token: string | null): Role | null {
+const ROLES: readonly RoleName[] = ["ADMIN", "USER", "SYSTEM"] as const;
+
+interface DecodedToken {
+  role?: unknown;
+  [key: string]: unknown;
+}
+
+function extractRole(token: string | null): RoleName | null {
   if (!token) return null;
 
-  const payload = TokenManager.parseToken(token);
+  let payload: DecodedToken;
+  try {
+    payload = jwtDecode<DecodedToken>(token);
+  } catch {
+    return null;
+  }
+
   const candidate = payload?.role;
 
   if (typeof candidate === "string" && (ROLES as readonly string[]).includes(candidate)) {
-    return candidate as Role;
+    return candidate as RoleName;
   }
 
   return null;
 }
 
-export function useRole(): { role: Role | null; isLoading: boolean } {
-  const { isAuthLoading } = useAuth();
+export function useRole(): { role: RoleName | null; isLoading: boolean } {
+  const { isAuthLoading, accessToken } = useAuth();
 
-  return {
-    role: parseRole(TokenManager.getAccessToken()),
-    isLoading: isAuthLoading,
-  };
+  const role = useMemo(() => extractRole(accessToken), [accessToken]);
+
+  return { role, isLoading: isAuthLoading };
 }
