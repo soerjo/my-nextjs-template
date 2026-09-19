@@ -10,7 +10,7 @@ import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
 
 export function LoginForm() {
-  const { login, isLoading } = useLogin();
+  const { login, isLoading, error } = useLogin();
   const mounted = useIsMounted();
 
   const {
@@ -26,7 +26,10 @@ export function LoginForm() {
   });
 
   async function onSubmit(data: LoginFormValues) {
-    await login(data);
+    try {
+      await login(data);
+    } catch {
+    }
   }
 
   return (
@@ -56,14 +59,14 @@ export function LoginForm() {
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {/* {error && (
+          {error && (
             <div
               role="alert"
               className="rounded-lg bg-danger-50 border border-danger-200 px-4 py-3 text-sm text-danger-700 dark:bg-danger-950 dark:border-danger-800 dark:text-danger-300"
             >
               {error.message || "Login failed. Please try again."}
             </div>
-          )} */}
+          )}
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium">

@@ -5,12 +5,18 @@ type RequestOptions = {
   body?: string;
   headers?: Record<string, string>;
   skipAuth?: boolean;
+  _retried?: boolean;
 };
 
-class ApiClient {
+type RefreshSubscriber = {
+  resolve: () => void;
+  reject: (reason?: unknown) => void;
+};
+
+export class ApiClient {
   private baseUrl: string;
   private isRefreshing: boolean = false;
-  private refreshSubscribers: Array<(token: string) => void> = [];
+  private refreshSubscribers: RefreshSubscriber[] = [];
 
   constructor(baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "") {
     this.baseUrl = baseUrl;
@@ -27,12 +33,19 @@ class ApiClient {
     };
   }
 
-  private subscribeTokenRefresh(callback: (token: string) => void): void {
-    this.refreshSubscribers.push(callback);
+  private subscribeTokenRefresh(subscriber: RefreshSubscriber): void {
+    this.refreshSubscribers.push(subscriber);
   }
 
-  private onTokenRefreshed(token: string): void {
-    this.refreshSubscribers.forEach((callback) => callback(token));
+  private onTokenRefreshed(): void {
+    this.refreshSubscribers.forEach(({ resolve }) => resolve());
+    this.refreshSubscribers = [];
+  }
+
+  private onTokenRefreshFailed(): void {
+    this.refreshSubscribers.forEach(({ reject }) =>
+      reject(new ApiError(401, "Failed to refresh token")),
+    );
     this.refreshSubscribers = [];
   }
 
@@ -77,7 +90,13 @@ class ApiClient {
     endpoint: string,
     options: RequestInit & RequestOptions = {},
   ): Promise<T> {
-    const { body, headers: customHeaders, skipAuth = false, ...rest } = options;
+    const {
+      body,
+      headers: customHeaders,
+      skipAuth = false,
+      _retried = false,
+      ...rest
+    } = options;
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...rest,
@@ -94,6 +113,14 @@ class ApiClient {
     }
 
     if (response.status === 401 && !skipAuth) {
+      if (_retried) {
+        TokenManager.clearTokens();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+        }
+        throw new ApiError(response.status, await response.text());
+      }
+
       const refreshToken = TokenManager.getRefreshToken();
       
       if (!refreshToken) {
@@ -105,11 +132,14 @@ class ApiClient {
       }
 
       if (this.isRefreshing) {
-        return new Promise((resolve, reject) => {
-          this.subscribeTokenRefresh(() => {
-            this.request<T>(endpoint, options)
-              .then(resolve)
-              .catch(reject);
+        return new Promise<T>((resolve, reject) => {
+          this.subscribeTokenRefresh({
+            resolve: () => {
+              this.request<T>(endpoint, { ...options, _retried: true })
+                .then(resolve)
+                .catch(reject);
+            },
+            reject,
           });
         });
       }
@@ -120,22 +150,23 @@ class ApiClient {
         const newToken = await this.refreshAccessToken();
         
         if (newToken) {
-          this.isRefreshing = false;
-          this.onTokenRefreshed(newToken);
-          return this.request<T>(endpoint, options);
+          this.onTokenRefreshed();
+          return this.request<T>(endpoint, { ...options, _retried: true });
         } else {
-          this.isRefreshing = false;
+          this.onTokenRefreshFailed();
           if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("auth:unauthorized"));
           }
           throw new ApiError(response.status, "Failed to refresh token");
         }
       } catch (error) {
-        this.isRefreshing = false;
+        this.onTokenRefreshFailed();
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("auth:unauthorized"));
         }
         throw error;
+      } finally {
+        this.isRefreshing = false;
       }
     }
 

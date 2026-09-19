@@ -106,16 +106,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) {
       const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
       const initialDelay = Math.max(0, timeUntilExpiration - 5 * 60 * 1000);
-      
+
+      let intervalId: ReturnType<typeof setInterval> | undefined;
       const timer = setTimeout(() => {
         checkAndRefreshToken();
-        
-        const intervalId = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
-        
-        return () => clearInterval(intervalId);
+        intervalId = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
       }, initialDelay);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (intervalId) clearInterval(intervalId);
+      };
     }
   }, [isAuthenticated, refreshTokenMutation]);
 

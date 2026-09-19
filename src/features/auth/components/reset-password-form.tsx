@@ -15,7 +15,7 @@ export function ResetPasswordForm() {
   const { resetPassword, isLoading } = useResetPassword();
   const mounted = useIsMounted();
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isApiError, setIsApiError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
 
@@ -39,11 +39,13 @@ export function ResetPasswordForm() {
       setIsSuccess(true);
     } catch (err) {
       console.error("Reset password error:", err);
-      setIsApiError(true);
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to reset password. Please try again.",
+      );
     }
   }
 
-  if (!token || isApiError) {
+  if (!token) {
     return (
       <Card className="w-full max-w-md px-4">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
@@ -142,6 +144,15 @@ export function ResetPasswordForm() {
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          {errorMessage && (
+            <div
+              role="alert"
+              className="rounded-lg bg-danger-50 border border-danger-200 px-4 py-3 text-sm text-danger-700 dark:bg-danger-950 dark:border-danger-800 dark:text-danger-300"
+            >
+              {errorMessage}
+            </div>
+          )}
+
           <div className="flex flex-col gap-1.5">
             <PasswordInput
               name="newPassword"

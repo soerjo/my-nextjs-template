@@ -13,7 +13,7 @@ import { ROUTES } from "@/constants";
 import { ApiError } from "@/lib";
 
 export function RegisterForm() {
-  const { register: registerUser, isLoading } = useRegister();
+  const { register: registerUser, isLoading, error } = useRegister();
   const router = useRouter();
   const mounted = useIsMounted();
   const [success, setSuccess] = useState(false);
@@ -35,18 +35,22 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues, event?: React.BaseSyntheticEvent) {
     event?.preventDefault();
-    
+    setApiErrMsg("");
+
     try {
       await registerUser(data);
       setSuccess(true);
       router.push(ROUTES.login);
     } catch (error) {
       if (error instanceof ApiError) {
-        if (error.status == 400) {
-          const errorMessage = error.message;
-          const errorResponse = JSON.parse(errorMessage) as ApiError;
-          setApiErrMsg(errorResponse.message);
+        try {
+          const errorResponse = JSON.parse(error.message) as { message?: string };
+          setApiErrMsg(errorResponse.message ?? error.message);
+        } catch {
+          setApiErrMsg(error.message || "Registration failed. Please try again.");
         }
+      } else {
+        setApiErrMsg("Registration failed. Please try again.");
       }
     }
   }
@@ -107,14 +111,14 @@ export function RegisterForm() {
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {/* {error && (
+          {(apiErrMsg || error) && (
             <div
               role="alert"
               className="rounded-lg bg-danger-50 border border-danger-200 px-4 py-3 text-sm text-danger-700 dark:bg-danger-950 dark:border-danger-800 dark:text-danger-300"
             >
-              {error.message || "Registration failed. Please try again."}
+              {apiErrMsg || error?.message || "Registration failed. Please try again."}
             </div>
-          )} */}
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -173,8 +177,6 @@ export function RegisterForm() {
               required
             />
           </div>
-
-          {apiErrMsg && <p className="text-sm text-red-400">{apiErrMsg}</p>}
 
           <Button
             type="submit"
