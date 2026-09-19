@@ -27,7 +27,9 @@ export function LoginProvider({ children }: { children: ReactNode }) {
     onSuccess: (response) => {
       if (response.data?.accessToken) {
         TokenManager.setAccessToken(response.data.accessToken);
-        TokenManager.setRefreshToken(response.data.refreshToken);
+        if (typeof response.data.refreshToken === "string") {
+          TokenManager.setRefreshToken(response.data.refreshToken);
+        }
         queryClient.invalidateQueries({ queryKey: ["auth", "verify"] });
         router.push(ROUTES.home);
       }

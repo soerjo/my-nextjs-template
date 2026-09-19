@@ -31,17 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: () => apiClient.post<void>(API_ROUTES.logout),
-    onMutate: () => {
-      TokenManager.clearTokens();
-    },
-    onSettled: async () => {
-      await verifyTokenQuery.refetch();
-      router.push(ROUTES.login);
-    },
-  });
-
   const refreshTokenMutation = useMutation({
     mutationFn: () =>
       apiClient.post<ApiResponse<LoginResponse>>(API_ROUTES.refreshToken, {
@@ -64,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasToken = !!TokenManager.getAccessToken();
   const isValid = TokenManager.isAccessTokenValid();
-  const isVerified = verifyTokenQuery.data?.data?.valid !== false;
+  const isVerified = verifyTokenQuery.data?.data?.valid === true;
   const isAuthenticated = hasToken && isValid && isVerified;
 
   const isAuthLoading = useMemo(() => {
@@ -73,14 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [verifyTokenQuery.isLoading]);
 
   const isLoading = useMemo(() => {
-    return isAuthLoading || logoutMutation.isPending;
-  }, [isAuthLoading, logoutMutation.isPending]);
+    return isAuthLoading;
+  }, [isAuthLoading]);
 
   const error = useMemo(() => {
     if (verifyTokenQuery.error) return verifyTokenQuery.error;
-    if (logoutMutation.error) return logoutMutation.error;
     return null;
-  }, [verifyTokenQuery.error, logoutMutation.error]);
+  }, [verifyTokenQuery.error]);
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated && pathname !== ROUTES.login && pathname !== ROUTES.register && pathname !== ROUTES.forgotPassword && pathname !== ROUTES.resetPassword) {

@@ -146,28 +146,40 @@ export class ApiClient {
 
       this.isRefreshing = true;
 
+      let refreshFailed = false;
+
       try {
         const newToken = await this.refreshAccessToken();
-        
+
         if (newToken) {
           this.onTokenRefreshed();
-          return this.request<T>(endpoint, { ...options, _retried: true });
         } else {
+          refreshFailed = true;
           this.onTokenRefreshFailed();
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("auth:unauthorized"));
-          }
-          throw new ApiError(response.status, "Failed to refresh token");
         }
-      } catch (error) {
+      } catch {
+        refreshFailed = true;
         this.onTokenRefreshFailed();
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
-        }
-        throw error;
       } finally {
         this.isRefreshing = false;
       }
+
+      if (refreshFailed) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+        }
+        throw new ApiError(response.status, "Failed to refresh token");
+      }
+
+      return this.request<T>(endpoint, { ...options, _retried: true });
+    }
+
+    if (response.status === 403 && !skipAuth) {
+      const errorText = await response.text();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:forbidden"));
+      }
+      throw new ApiError(response.status, errorText);
     }
 
     const errorText = await response.text();
@@ -190,6 +202,14 @@ export class ApiClient {
     return this.request<T>(endpoint, {
       ...options,
       method: "PUT",
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  patch<T>(endpoint: string, data?: unknown, options?: RequestOptions) {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
     });
   }

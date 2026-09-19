@@ -14,7 +14,7 @@ export const API_ROUTES = {
   logout: "/api/auth/logout",
   refreshToken: "/api/auth/refresh-token",
   verifyToken: "/api/auth/verify-token",
-  me: "/api/auth/me",
+  me: "/api/users/me",
   forgotPassword: "/api/auth/forgot-password",
   resetPassword: "/api/auth/reset-password",
   register: "/api/auth/register",
