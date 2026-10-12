@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Button, Spinner } from "@heroui/react";
+import { Loader2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks";
 
 export function AppHeader() {
@@ -16,13 +18,13 @@ export function AppHeader() {
         <Link href="/" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50">
           Home
         </Link>
-        <Button 
-          size="sm" 
-          variant="ghost" 
-          onPress={logout}
-          isDisabled={isLoading}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={logout}
+          disabled={isLoading}
         >
-          {isLoading ? <Spinner size="sm" /> : "Logout"}
+          {isLoading ? <Loader2 className="animate-spin" /> : "Logout"}
         </Button>
       </nav>
     </header>

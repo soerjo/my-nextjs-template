@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardContent, Input, Button, Spinner } from "@heroui/react";
+import { Loader2 } from "lucide-react";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/types";
 import { useRegister } from "@/features/auth/hooks";
 import { AppLink, PasswordInput } from "@/components/ui";
@@ -35,7 +40,7 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues, event?: React.BaseSyntheticEvent) {
     event?.preventDefault();
-    
+
     try {
       await registerUser(data);
       setSuccess(true);
@@ -51,10 +56,10 @@ export function RegisterForm() {
       }
     }
   }
-  
+
   if (success) {
     return (
-      <Card className="w-full max-w-md px-4">
+      <Card className="w-full max-w-md">
         <CardContent className="flex flex-col items-center gap-4 py-8">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -66,13 +71,13 @@ export function RegisterForm() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-success"
+            className="text-primary"
           >
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
           <h1 className="text-2xl font-bold">Registration Successful</h1>
-          <p className="text-sm text-default-400 text-center">
+          <p className="text-center text-sm text-muted-foreground">
             Redirecting to login...
           </p>
         </CardContent>
@@ -81,7 +86,7 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full max-w-md px-4">
+    <Card className="w-full max-w-md">
       <CardHeader className="flex flex-col items-center gap-2 pb-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -93,7 +98,7 @@ export function RegisterForm() {
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-default-400"
+          className="text-muted-foreground"
         >
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
@@ -101,66 +106,60 @@ export function RegisterForm() {
           <line x1="22" x2="16" y1="11" y2="11" />
         </svg>
         <h1 className="text-2xl font-bold">Create Account</h1>
-        <p className="text-sm text-default-400">
+        <p className="text-sm text-muted-foreground">
           Fill in your details to get started
         </p>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {/* {error && (
-            <div
-              role="alert"
-              className="rounded-lg bg-danger-50 border border-danger-200 px-4 py-3 text-sm text-danger-700 dark:bg-danger-950 dark:border-danger-800 dark:text-danger-300"
-            >
-              {error.message || "Registration failed. Please try again."}
-            </div>
-          )} */}
-
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="firstName" className="text-sm font-medium">
-                First Name <span className="text-danger">*</span>
-              </label>
+              <Label htmlFor="firstName">
+                First Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="firstName"
                 type="text"
                 placeholder="John"
+                aria-invalid={Boolean(errors.firstName)}
                 {...register("firstName")}
               />
               {errors.firstName && (
-                <p className="text-sm text-danger">{errors.firstName.message}</p>
+                <p className="text-sm text-destructive">{errors.firstName.message}</p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="lastName" className="text-sm font-medium">
-                Last Name <span className="text-danger">*</span>
-              </label>
+              <Label htmlFor="lastName">
+                Last Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="lastName"
                 type="text"
                 placeholder="Doe"
+                aria-invalid={Boolean(errors.lastName)}
                 {...register("lastName")}
               />
               {errors.lastName && (
-                <p className="text-sm text-danger">{errors.lastName.message}</p>
+                <p className="text-sm text-destructive">{errors.lastName.message}</p>
               )}
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email <span className="text-danger">*</span>
-            </label>
+            <Label htmlFor="email">
+              Email <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="john@example.com"
+              aria-invalid={Boolean(errors.email)}
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-danger">{errors.email.message}</p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
 
@@ -175,27 +174,26 @@ export function RegisterForm() {
             />
           </div>
 
-          {apiErrMsg && <p className="text-sm text-red-400">{apiErrMsg}</p>}
+          {apiErrMsg && <p className="text-sm text-destructive">{apiErrMsg}</p>}
 
           <Button
             type="submit"
-            variant="primary"
-            fullWidth
-            isDisabled={mounted ? Boolean(isLoading) : false}
+            className="w-full"
+            disabled={mounted ? Boolean(isLoading) : false}
           >
             {mounted && isLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner size="sm" />
+              <>
+                <Loader2 className="animate-spin" />
                 Creating account...
-              </span>
+              </>
             ) : (
               "Create Account"
             )}
           </Button>
 
-          <p className="text-center text-sm text-default-400">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <AppLink href={ROUTES.login} className="text-primary font-medium">
+            <AppLink href={ROUTES.login} className="font-medium text-primary">
               Sign in
             </AppLink>
           </p>

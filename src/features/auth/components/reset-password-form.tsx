@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
-import { Card, CardHeader, CardContent, Button, Spinner } from "@heroui/react";
+import { Loader2 } from "lucide-react";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "@/features/auth/types";
 import { useResetPassword } from "@/features/auth/hooks";
 import { AppLink, PasswordInput } from "@/components/ui";
@@ -45,7 +48,7 @@ export function ResetPasswordForm() {
 
   if (!token || isApiError) {
     return (
-      <Card className="w-full max-w-md px-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -57,21 +60,21 @@ export function ResetPasswordForm() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-danger"
+            className="text-destructive"
           >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" x2="12" y1="8" y2="12" />
             <line x1="12" x2="12.01" y1="16" y2="16" />
           </svg>
           <h1 className="text-2xl font-bold">Invalid Link</h1>
-          <p className="text-center text-sm text-default-400">
+          <p className="text-center text-sm text-muted-foreground">
             The password reset link is invalid or has expired.
           </p>
         </CardHeader>
 
         <CardContent>
-          <p className="text-center text-sm text-default-400">
-            <AppLink href={ROUTES.forgotPassword} className="text-primary font-medium">
+          <p className="text-center text-sm text-muted-foreground">
+            <AppLink href={ROUTES.forgotPassword} className="font-medium text-primary">
               Request a new reset link
             </AppLink>
           </p>
@@ -82,7 +85,7 @@ export function ResetPasswordForm() {
 
   if (isSuccess) {
     return (
-      <Card className="w-full max-w-md px-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -94,20 +97,20 @@ export function ResetPasswordForm() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-success"
+            className="text-primary"
           >
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
           <h1 className="text-2xl font-bold">Password Reset</h1>
-          <p className="text-center text-sm text-default-400">
+          <p className="text-center text-sm text-muted-foreground">
             Your password has been successfully reset.
           </p>
         </CardHeader>
 
         <CardContent>
-          <p className="text-center text-sm text-default-400">
-            <AppLink href={ROUTES.login} className="text-primary font-medium">
+          <p className="text-center text-sm text-muted-foreground">
+            <AppLink href={ROUTES.login} className="font-medium text-primary">
               Go to login
             </AppLink>
           </p>
@@ -117,7 +120,7 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <Card className="w-full max-w-md px-4">
+    <Card className="w-full max-w-md">
       <CardHeader className="flex flex-col items-center gap-2 pb-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -129,13 +132,13 @@ export function ResetPasswordForm() {
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-default-400"
+          className="text-muted-foreground"
         >
           <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         <h1 className="text-2xl font-bold">Reset Password</h1>
-        <p className="text-center text-sm text-default-400">
+        <p className="text-center text-sm text-muted-foreground">
           Enter your new password
         </p>
       </CardHeader>
@@ -166,22 +169,21 @@ export function ResetPasswordForm() {
 
           <Button
             type="submit"
-            variant="primary"
-            fullWidth
-            isDisabled={mounted ? Boolean(isLoading) : false}
+            className="w-full"
+            disabled={mounted ? Boolean(isLoading) : false}
           >
             {mounted && isLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner size="sm" />
+              <>
+                <Loader2 className="animate-spin" />
                 Resetting...
-              </span>
+              </>
             ) : (
               "Reset Password"
             )}
           </Button>
 
-          <p className="text-center text-sm text-default-400">
-            <AppLink href={ROUTES.login} className="text-primary font-medium">
+          <p className="text-center text-sm text-muted-foreground">
+            <AppLink href={ROUTES.login} className="font-medium text-primary">
               Back to login
             </AppLink>
           </p>
