@@ -5,7 +5,7 @@ export function HomeHero() {
         Welcome to My App
       </h1>
       <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-        Built with Next.js 16, React 19, HeroUI, and TanStack Query.
+        Built with Next.js 16, React 19, shadcn/ui, and TanStack Query.
       </p>
     </section>
   );

@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardHeader, CardContent, Input, Button, Spinner } from "@heroui/react";
+import { Loader2 } from "lucide-react";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/features/auth/types";
 import { useForgotPassword } from "@/features/auth/hooks";
 import { AppLink } from "@/components/ui";
@@ -36,7 +41,7 @@ export function ForgotPasswordForm() {
 
   if (isSuccess) {
     return (
-      <Card className="w-full max-w-md px-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -48,20 +53,20 @@ export function ForgotPasswordForm() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-success"
+            className="text-primary"
           >
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
           <h1 className="text-2xl font-bold">Check Your Email</h1>
-          <p className="text-center text-sm text-default-400">
+          <p className="text-center text-sm text-muted-foreground">
             We&apos;ve sent a password reset link to your email address.
           </p>
         </CardHeader>
 
         <CardContent>
-          <p className="text-center text-sm text-default-400">
-            <AppLink href={ROUTES.login} className="text-primary font-medium">
+          <p className="text-center text-sm text-muted-foreground">
+            <AppLink href={ROUTES.login} className="font-medium text-primary">
               Back to login
             </AppLink>
           </p>
@@ -71,7 +76,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Card className="w-full max-w-md px-4">
+    <Card className="w-full max-w-md">
       <CardHeader className="flex flex-col items-center gap-2 pb-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -83,13 +88,13 @@ export function ForgotPasswordForm() {
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-default-400"
+          className="text-muted-foreground"
         >
           <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         <h1 className="text-2xl font-bold">Forgot Password</h1>
-        <p className="text-center text-sm text-default-400">
+        <p className="text-center text-sm text-muted-foreground">
           Enter your email to receive a password reset link
         </p>
       </CardHeader>
@@ -99,46 +104,46 @@ export function ForgotPasswordForm() {
           {error && (
             <div
               role="alert"
-              className="rounded-lg bg-danger-50 border border-danger-200 px-4 py-3 text-sm text-danger-700 dark:bg-danger-950 dark:border-danger-800 dark:text-danger-300"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
               {error.message || "Failed to send reset link. Please try again."}
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email <span className="text-danger">*</span>
-            </label>
+            <Label htmlFor="email">
+              Email <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="Enter your email"
+              aria-invalid={Boolean(errors.email)}
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-danger">{errors.email.message}</p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
 
           <Button
             type="submit"
-            variant="primary"
-            fullWidth
-            isDisabled={mounted ? Boolean(isLoading) : false}
+            className="w-full"
+            disabled={mounted ? Boolean(isLoading) : false}
           >
             {mounted && isLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner size="sm" />
+              <>
+                <Loader2 className="animate-spin" />
                 Sending...
-              </span>
+              </>
             ) : (
               "Send Reset Link"
             )}
           </Button>
 
-          <p className="text-center text-sm text-default-400">
+          <p className="text-center text-sm text-muted-foreground">
             Remember your password?{" "}
-            <AppLink href={ROUTES.login} className="text-primary font-medium">
+            <AppLink href={ROUTES.login} className="font-medium text-primary">
               Back to login
             </AppLink>
           </p>

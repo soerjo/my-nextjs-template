@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Spinner } from "@heroui/react";
+import { Loader2 } from "lucide-react";
 import { useAuth as useAuthContext } from "@/features/auth/providers/auth-provider";
 import { useIsMounted } from "@/hooks";
 import { ROUTES } from "@/constants";
@@ -25,7 +25,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!mounted || isAuthLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+        <Loader2 className="size-8 animate-spin" />
       </div>
     );
   }
@@ -47,7 +47,7 @@ export function GuestRoute({ children }: { children: React.ReactNode }) {
   if (!mounted || isAuthLoading || isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+        <Loader2 className="size-8 animate-spin" />
       </div>
     );
   }
