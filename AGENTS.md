@@ -6,24 +6,22 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Commands
 
-- `npm run dev` — dev server (port 3000)
-- `npm run build` — production build
-- `npm run lint` — ESLint flat config (`eslint.config.mjs`, extends `core-web-vitals` + `typescript`)
-- `npx tsc --noEmit` — type check (no npm script)
+- `bun run dev` — dev server (port 3000)
+- `bun run build` — production build
+- `bun run lint` — ESLint flat config (`eslint.config.mjs`, extends `core-web-vitals` + `typescript`)
+- `bunx tsc --noEmit` — type check (no dedicated script)
 - No test framework is configured
 
 ## Stack
 
 - Next.js 16 (App Router only), React 19, TypeScript
-- Tailwind CSS v4 via `@tailwindcss/postcss` — `tailwind.config.js` exists but is a v3 leftover; do not edit it
-- HeroUI (`@heroui/react`) — styles imported in `globals.css` via `@import "@heroui/styles"`
+- Tailwind CSS v4 via `@tailwindcss/postcss` — CSS-first config in `src/app/globals.css` (`@import "tailwindcss"` + `@theme` design tokens)
+- shadcn/ui (Radix base) — primitives in `src/components/ui`, theme tokens in `src/app/globals.css`
 - TanStack React Query wired up via `src/providers/query-provider.tsx` (staleTime: 60s, no refetch on focus)
 
 ## Stale config files (ignore these)
 
-- `tailwind.config.js` — v3 leftover; Tailwind v4 uses CSS-based config
-- `.eslintrc.json`, `.eslintignore` — legacy format; ESLint 9 uses `eslint.config.mjs`
-- `next.config.js` — `.ts` version is the active one
+- `.eslintrc.json` — legacy format; ESLint 9 uses flat config (`eslint.config.mjs`)
 
 ## Architecture
 
@@ -33,7 +31,7 @@ Feature-based folder structure under `src/`:
 - `src/lib/` — api-client (with token refresh), query-keys factory
 - `src/providers/` — client-side context providers (QueryProvider, etc.)
 - `src/types/` — shared TypeScript types
-- `src/utils/` — pure utility functions (`cn`, `formatDate`, etc.)
+- `src/utils/` — pure utility functions (`cn`)
 - `src/config/` — app config derived from env vars
 - `src/constants/` — static values (routes, API paths)
 - `src/app/` — Next.js App Router. Route groups: `(main)/`, `(auth)/`.
@@ -53,7 +51,7 @@ Every module directory has a barrel `index.ts` — import via `@/features/home/c
 
 ## Package manager
 
-Bun is preferred (`bun.lock` present, `.npmrc` sets `package-lock=false`). npm scripts work via both npm and bun.
+Bun only. Run scripts with `bun run <script>` and binaries with `bunx`.
 
 ## Auth System
 
@@ -108,3 +106,77 @@ Bounded, ordered checklist for the full HeroUI v3 → shadcn/ui migration. Bun o
   - [x] Audit: no `@heroui/*` in `package.json`/`bun.lock`, no `@heroui/react` imports, no `@import "@heroui/styles"`, no `tailwind.config.js` — all clean
   - [x] Audit: Dockerfile free of npm references; `bun.lock` is the only lockfile — clean
 <!-- END:heroui-to-shadcn-migration -->
+
+<!-- BEGIN:template-improvements -->
+## Template improvements checklist
+
+Bounded, ordered checklist for 11 UI-only frontend improvements. Context: all API calls go to an external BE service; tokens live in `localStorage`; shadcn/ui + Tailwind v4 CSS-first; Bun only (never npm). Validate each step independently before moving on.
+
+- [x] **1. Fix `src/lib/api-client.ts` empty-response parsing**
+  - [x] Add a `parseResponse` helper that returns `undefined` for `204 No Content` / empty / non-JSON bodies instead of calling `response.json()` — added `parseResponse<T>` returning `undefined` on 204 / `content-length: 0` / non-JSON content-type / empty or unparseable body
+  - [x] Apply helper in `request<T>()` success path and in `refreshAccessToken()` (refresh response must still read tokens from JSON) — both use `parseResponse`; refresh reads `data?.data?.accessToken` from the typed JSON shape
+  - [x] `ApiError` should read a `message` from a JSON error body when present, falling back to raw text/status text — added `parseErrorMessage` (tries `message`/`error`, falls back to raw text, then `statusText`/status code); used at both `ApiError` throw sites
+  - [x] Keep existing 401 → refresh → retry flow and `auth:unauthorized` event behavior unchanged — refresh/subscriber/event logic untouched
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors (manual 204/error-body check deferred to runtime; no test framework yet)
+
+- [x] **2. `queryKeys` factory consistency**
+  - [x] Replace inline `["auth", "verify"]` in `src/features/auth/providers/login-provider.tsx` and `auth-provider.tsx` with `queryKeys.auth.verify` — both now import `queryKeys` from `@/lib` and use the factory
+  - [x] Extend `src/lib/query-keys.ts` with per-feature namespaces as needed (auth verify/refresh, home, …) following the existing `as const` pattern — added `auth.all` + `auth.logout` alongside existing `auth.verify` / `home.all`
+  - [x] Keep all invalidations/`useQuery` keys sourced from the factory (no string literals) — invalidation key is identical (`["auth","verify"]`), prefix matching unchanged
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors; `rg '"auth", "verify"' src/` only matches the factory definition in `query-keys.ts`
+
+- [x] **3. Semantic token cleanup (remove hardcoded `zinc-*` / manual `dark:`)**
+  - [x] `src/components/layouts/app-header.tsx` → `border-border`, `text-muted-foreground`, `hover:text-foreground`, `bg-background` — header border → `border-border`, nav link → `text-muted-foreground hover:text-foreground`
+  - [x] `src/components/layouts/app-footer.tsx` → `border-border`, `text-muted-foreground`
+  - [x] `src/features/home/components/home-hero.tsx` → `bg-background`, `text-foreground`, `text-muted-foreground`
+  - [x] `src/app/(main)/page.tsx` → `bg-background` — used `bg-muted/50` (was `bg-zinc-50 dark:bg-black`); `HomeHero` uses `bg-background` (was `bg-white dark:bg-black`)
+  - [x] Verify: `rg 'zinc-|dark:' src/components/layouts src/features/home src/app/\\(main\\)` clean (exit 1); `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors — also migrated the 4 `src/app/(auth)/*/page.tsx` route wrappers (`bg-zinc-50 dark:bg-black` → `bg-muted/50`) so `rg 'zinc-' src/` is now globally empty (exit 1)
+
+- [x] **4. Update stale info in `AGENTS.md`**
+  - [x] Replace HeroUI stack lines with shadcn/ui description; remove `@import "@heroui/styles"` mention — Stack now lists shadcn/ui (Radix) + Tailwind v4 CSS-first
+  - [x] Remove non-existent `formatDate` from `src/utils/` description (keep `cn`)
+  - [x] Update Commands to Bun (`bun run dev|build|lint`, `bunx tsc --noEmit`) and note test framework status after item 10 — commands switched to Bun; `No test framework is configured` retained (accurate until item 10)
+  - [x] Update Package manager section to Bun-only; prune stale-config notes that are no longer true — Bun-only wording; removed `tailwind.config.js` (deleted), `next.config.js` (only `.ts` exists) and `.eslintignore` (absent) from stale list, kept `.eslintrc.json`
+  - [x] Verify: `rg 'heroui|formatDate|next.config.js' AGENTS.md` returns only intentional/historical references — remaining matches are the migration checklist (historical) and this step's own verify line
+
+- [x] **5. App Router boundaries (error/global-error/not-found/loading)**
+  - [x] Add `src/app/error.tsx` (client, `reset()` retry button via shadcn `Button`, semantic tokens) — rendered with `retry` (stable since v16.3.0, preferred over `reset`), logs via `useEffect`, shows `error.message` fallback
+  - [x] Add `src/app/global-error.tsx` (client, renders `<html><body>`, minimal + semantic tokens) — also imports `./globals.css` itself (Boundaries replace the root layout, so styles must be self-contained)
+  - [x] Add `src/app/not-found.tsx` (shadcn `Button` link home) — server component, `AppLink` styled via `buttonVariants()` (avoids nested interactive elements)
+  - [x] Add `src/app/loading.tsx` (lightweight skeleton/spinner, semantic tokens) — centered `Loader2` (`animate-spin`, `text-muted-foreground`)
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success (`/_not-found` route prerendered); no hardcoded colors (rg audit clean)
+
+- [x] **6. `next.config.ts` rewrites + relative `apiClient` baseUrl**
+  - [x] Add `rewrites()` mapping `/api/:path*` → `${process.env.API_PROXY_TARGET}/:path*` (server-side env, NOT `NEXT_PUBLIC_`) — fallback `http://localhost:3000` when unset; `rg 'API_PROXY_TARGET' src/` empty (not exposed to client)
+  - [x] Change `ApiClient` default constructor `baseUrl` from `NEXT_PUBLIC_API_URL` to `/api` (relative) — now `process.env.NEXT_PUBLIC_API_URL || "/api"`: defaults to the relative `/api` proxy, env var kept only as an explicit direct-URL override (`||` so an empty value still falls back to `/api`)
+  - [x] Ensure token refresh also uses the relative `/api` path — `refreshAccessToken()` builds from `this.baseUrl` + `API_ROUTES.refreshToken` unchanged
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success — `API_ROUTES` are relative (`/api/...`), so `/api` + `/api/:path*` rewrite round-trips to the BE target; documented in `.env.example` (server-only `API_PROXY_TARGET`, optional `NEXT_PUBLIC_API_URL` override)
+
+- [x] **7. Env validation fail-fast with zod (`src/config`)**
+  - [x] Add a zod schema for server-side env (`API_PROXY_TARGET`, app env) parsed in `src/config/index.ts` — schema: `NEXT_PUBLIC_APP_NAME` (default "My App"), `NEXT_PUBLIC_APP_URL` (`z.url()`, default `http://localhost:3000`), `NEXT_PUBLIC_API_URL` (optional string), `API_PROXY_TARGET` (`z.url()` optional); `z.url()` used (`.url()` on strings is deprecated in zod 4)
+  - [x] Fail fast on invalid/missing required vars with a clear error — `parseErrorMessage`-style `throw` with `z.prettifyError` output
+  - [x] Ensure server-only validation does not leak into / break the client bundle (no `NEXT_PUBLIC_*`-only import into client, correct `typeof window` / `server-only` guard) — throw guarded by `typeof window === "undefined"` (server-only fail-fast); on client failure falls back to `envSchema.parse({})` defaults so the client bundle never breaks
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success; `appConfig` typed from parsed env (`apiProxyTarget`, `appName` added), `AppConfig` export preserved
+
+- [x] **8. CI workflow `.github/workflows/ci.yml`**
+  - [x] Trigger on `push` and `pull_request` — `push` scoped to `main`, plus all `pull_request`
+  - [x] Steps: install (Bun, frozen lockfile) → `bun run lint` → `bunx tsc --noEmit` → `bun run build` — `actions/checkout@v4` + `oven-sh/setup-bun@v2` (`bun-version: latest`); build env supplies `NEXT_PUBLIC_*` placeholders
+  - [x] Provide required `NEXT_PUBLIC_*` / build env vars via workflow env or placeholders — `NEXT_PUBLIC_APP_NAME` / `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_API_URL=""` on the build step
+  - [x] Optional lightweight `docker build` job (no push) — `docker/setup-buildx-action@v3` + `docker/build-push-action@v6` with `push: false`, `needs: checks`, GHA cache
+  - [x] Verify: workflow YAML lint (`python3 -c yaml.safe_load` OK); no `npm` references; `bun install --frozen-lockfile` succeeds locally with same steps
+
+- [x] **9. `next-themes` + theme toggle in `AppHeader`**
+  - [x] Add `next-themes` (Bun) and wrap app in `ThemeProvider` (attribute `class`, `suppressHydrationWarning` on `<html>`) — `next-themes@0.4.6` via `bun add`; `ThemeProvider` (`attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`) added in `src/providers/index.tsx`; `<html suppressHydrationWarning>` already present in `src/app/layout.tsx`
+  - [x] Add a toggle in `src/components/layouts/app-header.tsx` handling hydration/mount safely, using shadcn `Button` + lucide icons — ghost `Button` (`size="icon-sm"`) with `Sun`/`Moon`; gated by `useIsMounted()` (placeholder `Sun` + `disabled` until mounted) so SSR/first render match
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success (8/8 static pages prerendered)
+
+- [x] **10. Vitest + RTL smoke tests for auth forms**
+  - [x] Add Vitest + `@testing-library/react` + jsdom via Bun; add `test` script and minimal config — `bun add -d vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/dom @testing-library/user-event @testing-library/jest-dom`; `"test": "vitest run"` (non-watch); `vitest.config.ts` (react plugin, jsdom env, `@` alias, setup file) + `vitest.setup.ts` (jest-dom matchers + RTL `cleanup()` in `afterEach`) — `@types/testing-library__jest-dom` omitted after installation: it is a deprecated empty stub that breaks `tsc` (TS2688), and jest-dom v7 ships its own types via `@testing-library/jest-dom/vitest`
+  - [x] Smoke test one auth form (e.g. `login-form.tsx`): renders fields, validates required input, submit path (mock `apiClient`/providers) — `src/__tests__/smoke.test.tsx` (example-pattern, not full coverage): LoginForm renders "Sign In" heading + email field (`@/features/auth/hooks` mocked with a `useLogin` stub); PasswordInput toggles input type password↔text via the eye button; AppHeader renders logout button (hooks + `next-themes` mocked)
+  - [x] Verify: `bun run test` passes (3/3), `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors (vitest config type-safe)
+
+- [x] **11. Husky + lint-staged pre-commit**
+  - [x] Add `husky` + `lint-staged` via Bun; `prepare` script; `pre-commit` hook — `bun add -d husky lint-staged prettier`; `"prepare": "husky"`; `bunx husky` initialized `.husky/_` (hooksPath `.husky/_`); `.husky/pre-commit` runs `bunx lint-staged`
+  - [x] `lint-staged` runs ESLint (and Prettier if configured) on staged files only — `package.json` `lint-staged`: `*.{ts,tsx}` → `eslint --fix` then `prettier --write`
+  - [x] Verify: a commit with a lint error is blocked; a clean commit succeeds; `bun install` re-installs hooks — real commit with a `@typescript-eslint/no-explicit-any` error was blocked (`husky - pre-commit script failed (code 1)`); a clean commit succeeded; test file removed and tree restored
+<!-- END:template-improvements -->

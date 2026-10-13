@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { ROUTES, API_ROUTES } from "@/constants";
-import { apiClient } from "@/lib";
-import { TokenManager } from "@/features/auth/services/token-manager";
-import type { LoginResponse } from "@/features/auth/types";
-import type { ApiResponse } from "@/types";
+import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { ROUTES, API_ROUTES } from '@/constants';
+import { apiClient, queryKeys } from '@/lib';
+import { TokenManager } from '@/features/auth/services/token-manager';
+import type { LoginResponse } from '@/features/auth/types';
+import type { ApiResponse } from '@/types';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -24,10 +24,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const verifyTokenQuery = useQuery<ApiResponse<{ valid: boolean }>>({
-    queryKey: ["auth", "verify"],
+    queryKey: queryKeys.auth.verify,
     queryFn: () => apiClient.get(API_ROUTES.verifyToken),
     retry: false,
-    enabled: typeof window !== "undefined" && TokenManager.isAccessTokenValid(),
+    enabled: typeof window !== 'undefined' && TokenManager.isAccessTokenValid(),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -44,9 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshTokenMutation = useMutation({
     mutationFn: () =>
-      apiClient.post<ApiResponse<LoginResponse>>(API_ROUTES.refreshToken, {
-        refreshToken: TokenManager.getRefreshToken(),
-      }, { skipAuth: true }),
+      apiClient.post<ApiResponse<LoginResponse>>(
+        API_ROUTES.refreshToken,
+        {
+          refreshToken: TokenManager.getRefreshToken(),
+        },
+        { skipAuth: true },
+      ),
     onSuccess: (response) => {
       if (response.data?.accessToken) {
         TokenManager.setAccessToken(response.data.accessToken);
@@ -83,7 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [verifyTokenQuery.error, logoutMutation.error]);
 
   useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated && pathname !== ROUTES.login && pathname !== ROUTES.register && pathname !== ROUTES.forgotPassword && pathname !== ROUTES.resetPassword) {
+    if (
+      !isAuthLoading &&
+      !isAuthenticated &&
+      pathname !== ROUTES.login &&
+      pathname !== ROUTES.register &&
+      pathname !== ROUTES.forgotPassword &&
+      pathname !== ROUTES.resetPassword
+    ) {
       router.push(ROUTES.login);
     }
   }, [isAuthenticated, isAuthLoading, pathname, router]);
@@ -96,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!token) return;
 
       const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
-      
+
       if (timeUntilExpiration <= 5 * 60 * 1000 && timeUntilExpiration > 0) {
         refreshTokenMutation.mutate();
       }
@@ -124,25 +135,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, refreshTokenMutation]);
 
-  const value = useMemo<AuthContextValue>(() => ({
-    isAuthenticated,
-    isLoading,
-    isAuthLoading,
-    logout,
-    error,
-  }), [isAuthenticated, isLoading, isAuthLoading, logout, error]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      isAuthenticated,
+      isLoading,
+      isAuthLoading,
+      logout,
+      error,
+    }),
+    [isAuthenticated, isLoading, isAuthLoading, logout, error],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
