@@ -1,15 +1,35 @@
 import { ThemeProvider } from 'next-themes';
+import { AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 
 import { AuthProvider } from '@/features/auth/providers/auth-provider';
+import { AppStoreProvider } from '@/stores';
+import defaultMessages from '@/i18n/messages/id.json';
 
 import { QueryProvider } from './query-provider';
+import { ToasterProvider } from './toaster-provider';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export async function Providers({ children }: { children: React.ReactNode }) {
+  let locale = 'id';
+  let messages: AbstractIntlMessages = defaultMessages;
+
+  try {
+    locale = await getLocale();
+    messages = await getMessages();
+  } catch {
+    // Fallback during static generation or when outside request context
+  }
+
   return (
-    <ThemeProvider disableTransitionOnChange enableSystem attribute="class" defaultTheme="system">
-      <QueryProvider>
-        <AuthProvider>{children}</AuthProvider>
-      </QueryProvider>
-    </ThemeProvider>
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <ThemeProvider disableTransitionOnChange enableSystem attribute="class" defaultTheme="system">
+        <AppStoreProvider>
+          <QueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </QueryProvider>
+          <ToasterProvider />
+        </AppStoreProvider>
+      </ThemeProvider>
+    </NextIntlClientProvider>
   );
 }
