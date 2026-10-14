@@ -2,6 +2,7 @@
 
 # Usage instructions:
 # 1. Production mode (standalone runner):
+#    NEXT_PUBLIC_DUMMY_MODE=true docker compose --profile prod up -d --build
 #    docker compose --profile prod up -d --build
 #
 # 2. Development mode (hot reload dev server):
@@ -13,6 +14,8 @@ services:
     build:
       context: .
       target: runner
+      args:
+        NEXT_PUBLIC_DUMMY_MODE: ${NEXT_PUBLIC_DUMMY_MODE:-}
     container_name: my-nextjs-template
     ports:
       - "3100:3000"
@@ -36,6 +39,8 @@ services:
     build:
       context: .
       target: development
+      args:
+        NEXT_PUBLIC_DUMMY_MODE: ${NEXT_PUBLIC_DUMMY_MODE:-}
     container_name: my-nextjs-template-dev
     ports:
       - "3101:3000"
