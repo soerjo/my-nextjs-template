@@ -138,8 +138,26 @@ class ApiClient {
     const delay = Math.floor(Math.random() * 200) + 300; // 300-500ms
     await new Promise((resolve) => setTimeout(resolve, delay));
 
-    const dummyAccessToken =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkR1bW15IFVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6OTk5OTk5OTk5OX0.dummy_signature';
+    const createDummyJwt = (expiresInSeconds: number = 86400) => {
+      const now = Math.floor(Date.now() / 1000);
+      const header = { alg: 'HS256', typ: 'JWT' };
+      const payload = {
+        sub: '1',
+        email: 'dummy@example.com',
+        name: 'Dummy User',
+        iat: now,
+        exp: now + expiresInSeconds,
+      };
+
+      const base64UrlEncode = (obj: object) => {
+        const json = JSON.stringify(obj);
+        return btoa(json).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      };
+
+      return `${base64UrlEncode(header)}.${base64UrlEncode(payload)}.dummy-signature`;
+    };
+
+    const dummyAccessToken = createDummyJwt();
     const dummyRefreshToken = 'dummy_refresh_token_string';
     const dummyUser = {
       id: '1',
@@ -188,7 +206,10 @@ class ApiClient {
 
     if (endpoint.includes(API_ROUTES.verifyToken)) {
       return {
-        data: dummyUser,
+        data: {
+          valid: true,
+          user: dummyUser,
+        },
         message: 'Token verified (Dummy Mode)',
       } as unknown as T;
     }
