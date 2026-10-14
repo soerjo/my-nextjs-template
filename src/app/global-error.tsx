@@ -12,7 +12,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
   }, [error]);
 
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+    <html suppressHydrationWarning className="h-full antialiased" lang="en">
       <body className="min-h-full flex flex-col">
         <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-background px-6 py-24 text-center">
           <h1 className="text-2xl font-semibold text-foreground">Something went wrong</h1>

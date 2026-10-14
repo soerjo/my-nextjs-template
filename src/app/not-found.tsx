@@ -9,7 +9,7 @@ export default function NotFound() {
       <p className="max-w-md text-sm text-muted-foreground">
         The page you are looking for doesn&apos;t exist or has been moved.
       </p>
-      <AppLink href="/" className={cn(buttonVariants())}>
+      <AppLink className={cn(buttonVariants())} href="/">
         Back to home
       </AppLink>
     </div>

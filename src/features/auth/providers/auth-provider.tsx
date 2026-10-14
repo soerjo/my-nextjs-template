@@ -1,13 +1,15 @@
 'use client';
 
+import type { LoginResponse } from '@/features/auth/types';
+import type { ApiResponse } from '@/types';
+
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
+
 import { ROUTES, API_ROUTES } from '@/constants';
 import { apiClient, queryKeys } from '@/lib';
 import { TokenManager } from '@/features/auth/services/token-manager';
-import type { LoginResponse } from '@/features/auth/types';
-import type { ApiResponse } from '@/types';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthLoading = useMemo(() => {
     if (typeof window === 'undefined') return true;
+
     return verifyTokenQuery.isLoading;
   }, [verifyTokenQuery.isLoading]);
 
@@ -83,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const error = useMemo(() => {
     if (verifyTokenQuery.error) return verifyTokenQuery.error;
     if (logoutMutation.error) return logoutMutation.error;
+
     return null;
   }, [verifyTokenQuery.error, logoutMutation.error]);
 
@@ -104,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkAndRefreshToken = () => {
       const token = TokenManager.getAccessToken();
+
       if (!token) return;
 
       const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
@@ -114,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const token = TokenManager.getAccessToken();
+
     if (token) {
       const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
       const initialDelay = Math.max(0, timeUntilExpiration - 5 * 60 * 1000);
@@ -151,8 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 }

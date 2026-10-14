@@ -1,8 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { cn } from "@/utils";
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
+
+import Link from 'next/link';
+
+import { cn } from '@/utils';
 
 type AppLinkProps = {
   href: string;
@@ -11,27 +13,17 @@ type AppLinkProps = {
   isExternal?: boolean;
 };
 
-export function AppLink({
-  href,
-  children,
-  className,
-  isExternal = false,
-}: AppLinkProps) {
+export function AppLink({ href, children, className, isExternal = false }: AppLinkProps) {
   if (isExternal) {
     return (
-      <a
-        href={href}
-        className={cn("transition-colors", className)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a className={cn('transition-colors', className)} href={href} rel="noopener noreferrer" target="_blank">
         {children}
       </a>
     );
   }
 
   return (
-    <Link href={href} className={cn("transition-colors", className)}>
+    <Link className={cn('transition-colors', className)} href={href}>
       {children}
     </Link>
   );

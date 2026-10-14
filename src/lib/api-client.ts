@@ -20,6 +20,7 @@ class ApiClient {
     if (skipAuth) return {};
 
     const token = TokenManager.getAccessToken();
+
     if (!token) return {};
 
     return {
@@ -40,10 +41,12 @@ class ApiClient {
 
     if (!contentType.includes('application/json')) {
       await response.text().catch(() => '');
+
       return undefined;
     }
 
     const text = await response.text().catch(() => '');
+
     if (!text) {
       return undefined;
     }
@@ -65,6 +68,7 @@ class ApiClient {
     try {
       const body = JSON.parse(text) as { message?: unknown; error?: unknown };
       const message = body.message ?? body.error;
+
       if (typeof message === 'string' && message) {
         return message;
       }
@@ -86,8 +90,10 @@ class ApiClient {
 
   private async refreshAccessToken(): Promise<string | null> {
     const refreshToken = TokenManager.getRefreshToken();
+
     if (!refreshToken) {
       TokenManager.clearTokens();
+
       return null;
     }
 
@@ -102,23 +108,27 @@ class ApiClient {
 
       if (!response.ok) {
         TokenManager.clearTokens();
+
         return null;
       }
 
       const data = await this.parseResponse<{
         data?: { accessToken?: string; refreshToken?: string };
       }>(response);
+
       if (data?.data?.accessToken) {
         TokenManager.setAccessToken(data.data.accessToken);
         if (data.data.refreshToken) {
           TokenManager.setRefreshToken(data.data.refreshToken);
         }
+
         return data.data.accessToken;
       }
 
       return null;
     } catch {
       TokenManager.clearTokens();
+
       return null;
     }
   }
@@ -138,6 +148,7 @@ class ApiClient {
 
     if (response.ok) {
       const data = await this.parseResponse<T>(response);
+
       return data as T;
     }
 
@@ -168,6 +179,7 @@ class ApiClient {
         if (newToken) {
           this.isRefreshing = false;
           this.onTokenRefreshed(newToken);
+
           return this.request<T>(endpoint, options);
         } else {
           this.isRefreshing = false;

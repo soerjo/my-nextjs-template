@@ -1,13 +1,15 @@
 'use client';
 
+import type { LoginFormValues, LoginResponse } from '@/features/auth/types';
+import type { ApiResponse } from '@/types';
+
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+
 import { API_ROUTES, ROUTES } from '@/constants';
 import { apiClient, queryKeys } from '@/lib';
 import { TokenManager } from '@/features/auth/services/token-manager';
-import type { LoginFormValues, LoginResponse } from '@/features/auth/types';
-import type { ApiResponse } from '@/types';
-import { useRouter } from 'next/navigation';
 
 interface LoginContextValue {
   login: (data: LoginFormValues) => Promise<void>;
@@ -51,8 +53,10 @@ export function LoginProvider({ children }: { children: ReactNode }) {
 
 export function useLogin() {
   const context = useContext(LoginContext);
+
   if (context === undefined) {
     throw new Error('useLogin must be used within a LoginProvider');
   }
+
   return context;
 }
