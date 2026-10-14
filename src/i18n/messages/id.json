@@ -1,0 +1,34 @@
+{
+  "navbar": {
+    "home": "Beranda",
+    "table": "Tabel",
+    "dashboard": "Dasbor",
+    "profile": "Profil",
+    "upload": "Unggah",
+    "examples": "Contoh",
+    "logout": "Keluar",
+    "toggleLanguage": "Ganti bahasa",
+    "toggleTheme": "Ganti tema",
+    "toggleNavigation": "Buka navigasi"
+  },
+  "profileForm": {
+    "title": "Formulir Profil",
+    "description": "Perbarui informasi profil dan daftar email Anda.",
+    "fullName": "Nama Lengkap",
+    "headline": "Gelar / Headline",
+    "bio": "Bio",
+    "bioPlaceholder": "Bio singkat (opsional)",
+    "emails": "Daftar Email",
+    "emailsHelp": "Tambahkan satu atau lebih email kontak.",
+    "label": "Label",
+    "email": "Email",
+    "addEmail": "Tambah Email",
+    "remove": "Hapus",
+    "removeEmail": "Hapus email {index}",
+    "reset": "Reset",
+    "submit": "Simpan Perubahan",
+    "submitting": "Menyimpan...",
+    "success": "Profil berhasil diperbarui!",
+    "error": "Gagal memperbarui profil."
+  }
+}

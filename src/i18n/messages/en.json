@@ -1,0 +1,34 @@
+{
+  "navbar": {
+    "home": "Home",
+    "table": "Table",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "upload": "Upload",
+    "examples": "Examples",
+    "logout": "Logout",
+    "toggleLanguage": "Toggle language",
+    "toggleTheme": "Toggle theme",
+    "toggleNavigation": "Toggle navigation"
+  },
+  "profileForm": {
+    "title": "Profile Form",
+    "description": "Update your profile information and email addresses.",
+    "fullName": "Full Name",
+    "headline": "Headline",
+    "bio": "Bio",
+    "bioPlaceholder": "A short bio (optional)",
+    "emails": "Email Addresses",
+    "emailsHelp": "Add one or more contact emails.",
+    "label": "Label",
+    "email": "Email",
+    "addEmail": "Add Email",
+    "remove": "Remove",
+    "removeEmail": "Remove email {index}",
+    "reset": "Reset",
+    "submit": "Save Changes",
+    "submitting": "Saving...",
+    "success": "Profile successfully updated!",
+    "error": "Failed to update profile."
+  }
+}

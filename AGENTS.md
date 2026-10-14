@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 ## Commands
@@ -18,6 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Tailwind CSS v4 via `@tailwindcss/postcss` — CSS-first config in `src/app/globals.css` (`@import "tailwindcss"` + `@theme` design tokens)
 - shadcn/ui (Radix base) — primitives in `src/components/ui`, theme tokens in `src/app/globals.css`
 - TanStack React Query wired up via `src/providers/query-provider.tsx` (staleTime: 60s, no refetch on focus)
+- Dummy API Mode: Set `NEXT_PUBLIC_DUMMY_MODE="true"` to mock all auth API requests with 200 success responses and simulated 300-500ms delay without backend hits.
 
 ## Architecture
 
@@ -227,3 +232,63 @@ Ordering note: P1.2 (port legacy ESLint rules) MUST be completed before or along
   - [x] Decide failure vs. warning policy for findings and document it in the step — warning policy documented in workflow comment
   - [x] Verify: workflow YAML lints clean; audit step runs and reports as expected — YAML validated
 <!-- END:upgrade-priorities -->
+
+<!-- BEGIN:example-pages -->
+## Example pages implementation
+
+Bounded, ordered checklist for adding example pages (table, dashboard, profile-form, upload) plus i18n. Bun only (never npm). Feature-based folder structure, barrel exports, semantic tokens, `queryKeys` factory. Do not start any phase until its dependencies are complete. All items start pending — mark only after verifying.
+
+- [x] **Fase 1 Fondasi**
+  - [x] Install `sonner`, `date-fns`, `@tanstack/react-table`, `recharts`, `react-dropzone` via Bun (`bun add`) (next-intl skipped to Fase 6)
+  - [x] Add Sonner `<Toaster />` in `src/providers/` (mounted once at app root)
+  - [x] Add `Skeleton` component to `src/components/ui/` (shadcn primitives, semantic tokens, barrel export)
+  - [x] Refactor `useAppStore` to a Zustand SSR-safe pattern (store factory + context provider) and use it for real
+  - [x] Add `AppHeader` nav group "Examples" with links to `/examples/table`, `/examples/dashboard`, `/examples/profile-form`, `/examples/upload`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Fase 2 `/examples/table`**
+  - [x] TanStack Table + React Query with server-side pagination + sorting
+  - [x] Mock service in `src/features/examples/services` with simulated delay
+  - [x] `Skeleton` loading state while fetching
+  - [x] Format date column with `date-fns`
+  - [x] Use `queryKeys.examples.table` from the query-keys factory
+  - [x] Barrel exports; semantic tokens; no hardcoded colors
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Fase 3 `/examples/dashboard`**
+  - [x] Recharts line + bar charts fed by mock data via React Query — `fetchExampleDashboard` (30 seeded daily points + summary) in `example-dashboard-service.ts`, `useExampleDashboard` hook using `queryKeys.examples.dashboard()`; `LineChart` (revenue) + `BarChart` (orders) in `example-dashboard-view.tsx`
+  - [x] `Skeleton` loading state while fetching — summary cards + both chart cards render skeleton placeholders on `isLoading`
+  - [x] Format axis labels with `date-fns` — `format(new Date(value), 'MMM d')` for X axis ticks, `'PPPP'` in the custom tooltip
+  - [x] Barrel exports; semantic tokens — updated `components`/`hooks`/`services` barrels + `queryKeys.examples.dashboard`; chart colors use `var(--chart-1)`/`var(--chart-2)`, grid `var(--border)`, ticks `var(--muted-foreground)`, tooltip on `popover`/`border` tokens (no hardcoded hex)
+  - [x] Verify: `bun run lint` exit 0 (3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors, `bun run test` passes (3/3), `bun run build` success (`/examples/dashboard` prerendered)
+
+- [x] **Fase 4 `/examples/profile-form`**
+  - [x] RHF + Zod + `useFieldArray` for a dynamic email list — `profileFormSchema` (`fullName`/`headline`/optional `bio` + `emails[]` of `{label,address}` with `min(1)`) in `features/examples/types`; `ExampleProfileFormView` wires `useForm` + `zodResolver` + `useFieldArray({ control, name: 'emails' })` with add/remove (remove disabled at one row)
+  - [x] Submit via React Query mutation — `useExampleProfileForm` (`useMutation`, `mutationKey: queryKeys.examples.profileForm()`) calling `submitExampleProfile` service (700ms delay, `fail` in full name triggers the error path)
+  - [x] Sonner toast on success/failure — `toast.success`/`toast.error` in the mutation's `onSuccess`/`onError` (app-root `ToasterProvider`)
+  - [x] Barrel exports; semantic tokens — updated `types`/`services`/`hooks`/`components` barrels; shadcn `Card`/`Input`/`Label`/`Button` + `text-destructive`/`text-muted-foreground`/`bg-muted/30`/`border-border` tokens, no hardcoded colors
+  - [x] Verify: `bun run lint` exit 0 (same 3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors, `bun run test` passes (3/3), `bun run build` success (`/examples/profile-form` prerendered)
+
+- [x] **Fase 5 `/examples/upload`**
+  - [x] `react-dropzone` drag & drop with file list preview — `useDropzone` (10MB `maxSize`) in `example-upload-view.tsx` with drag-active styling, per-file icon/size preview, and remove action
+  - [x] Mock upload with progress indicator — `useMutation` (`mutationKey: queryKeys.examples.upload()`) simulates 20→100% progress via `setTimeout`, rendered with shadcn `Progress` + percentage label; ~10% simulated failure exercises the error path
+  - [x] Sonner toast on completion/failure — `toast.success` / `toast.error` in mutation `onSuccess` / `onError` (app-root `ToasterProvider`)
+  - [x] Barrel exports; semantic tokens — `ExampleUploadView` exported from `components/index.ts`; uses `Card`/`Button`/`Progress` + `border-border`/`bg-muted`/`text-foreground`/`text-muted-foreground`/`text-destructive`/`bg-primary` tokens (file-type icons keep intentional accent colors)
+  - [x] Verify (quick, no build): `bun run lint` exit 0 (3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors; route `src/app/(main)/examples/upload/page.tsx` renders `ExampleUploadView`
+
+- [x] **Fase 6 i18n (`next-intl`, locale via cookie, no URL prefix)**
+  - [x] Add `next-intl` provider (cookie-based locale, no locale-prefix routing)
+  - [x] Use `useTranslations` in components
+  - [x] Add locale switcher ID/EN in `AppHeader`
+  - [x] Translate navbar and the profile-form page
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Fase 7 Verifikasi final**
+  - [x] Polish: replace hardcoded file-type icon accents (`text-blue-500`/`text-emerald-500`/`text-amber-500`) in `example-upload-view.tsx` `getFileIcon` with semantic tokens (`text-primary`, `text-primary/70`, `text-muted-foreground`)
+  - [x] `bun run lint` exit 0 (0 errors, 5 warnings — 3 pre-existing `no-console`, 2 `import/no-anonymous-default-export` from Fase 6)
+  - [x] `bunx tsc --noEmit` 0 errors
+  - [x] `bun run test` passes (3/3)
+  - [x] `bun run build` success — all 4 `/examples/*` routes built (`/examples/dashboard`, `/examples/profile-form`, `/examples/table`, `/examples/upload`)
+  - [x] `docker build -t my-nextjs-template .` exit 0 — parent-verified (image sha256:397183ce...849c65)
+  - [x] Smoke test `/`, `/login`, `/examples/table`, `/examples/dashboard`, `/examples/profile-form`, `/examples/upload` return 200 on `PORT=3100` — parent-verified
+<!-- END:example-pages -->
