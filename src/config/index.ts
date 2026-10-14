@@ -5,6 +5,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().default('http://localhost:3000'),
   NEXT_PUBLIC_API_URL: z.string().optional(),
   API_PROXY_TARGET: z.url().optional(),
+  NEXT_PUBLIC_DUMMY_MODE: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse({
@@ -12,6 +13,7 @@ const parsedEnv = envSchema.safeParse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   API_PROXY_TARGET: process.env.API_PROXY_TARGET,
+  NEXT_PUBLIC_DUMMY_MODE: process.env.NEXT_PUBLIC_DUMMY_MODE,
 });
 
 if (!parsedEnv.success && typeof window === 'undefined') {
@@ -25,6 +27,7 @@ export const appConfig = {
   appUrl: env.NEXT_PUBLIC_APP_URL,
   apiUrl: env.NEXT_PUBLIC_API_URL ?? '',
   apiProxyTarget: env.API_PROXY_TARGET,
+  isDummyMode: env.NEXT_PUBLIC_DUMMY_MODE === 'true' || env.NEXT_PUBLIC_DUMMY_MODE === '1',
   isDev: process.env.NODE_ENV === 'development',
 } as const;
 
