@@ -21,11 +21,23 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Policy: dependency vulnerabilities are reported as warnings and do NOT
+      # fail the build. `bun audit` exits non-zero when advisories are found,
+      # so `continue-on-error: true` keeps CI green when a downstream advisory
+      # lands (e.g. between dependency bumps). Review the step output/logs and
+      # address findings out-of-band; it is intentionally not a required check.
+      - name: Security audit (non-blocking — advisories are warnings)
+        run: bun audit
+        continue-on-error: true
+
       - name: Lint
         run: bun run lint
 
       - name: Type check
         run: bunx tsc --noEmit
+
+      - name: Test
+        run: bun run test
 
       - name: Build
         run: bun run build

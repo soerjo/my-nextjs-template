@@ -1,4 +1,5 @@
 import type { UseFormRegister } from 'react-hook-form';
+
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -38,9 +39,10 @@ describe('PasswordInput', () => {
       ref: vi.fn(),
     })) as unknown as UseFormRegister<Record<string, never>>;
 
-    render(<PasswordInput name="password" label="Password" register={register} placeholder="Enter your password" />);
+    render(<PasswordInput label="Password" name="password" placeholder="Enter your password" register={register} />);
 
     const input = screen.getByLabelText('Password');
+
     expect(input).toHaveAttribute('type', 'password');
 
     await user.click(screen.getByRole('button', { name: 'Show password' }));

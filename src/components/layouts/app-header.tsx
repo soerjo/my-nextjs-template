@@ -17,23 +17,23 @@ export function AppHeader() {
 
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-      <Link href="/" className="text-lg font-semibold">
+      <Link className="text-lg font-semibold" href="/">
         My App
       </Link>
       <nav className="flex items-center gap-4">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link className="text-sm text-muted-foreground hover:text-foreground" href="/">
           Home
         </Link>
         <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          disabled={!mounted}
           aria-label="Toggle theme"
+          disabled={!mounted}
+          size="icon-sm"
+          variant="ghost"
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
         >
           {mounted && isDark ? <Moon /> : <Sun />}
         </Button>
-        <Button size="sm" variant="ghost" onClick={logout} disabled={isLoading}>
+        <Button disabled={isLoading} size="sm" variant="ghost" onClick={logout}>
           {isLoading ? <Loader2 className="animate-spin" /> : 'Logout'}
         </Button>
       </nav>

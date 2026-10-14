@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { API_ROUTES } from "@/constants";
-import { apiClient } from "@/lib";
-import type { RegisterFormValues } from "@/features/auth/types";
-import type { ApiResponse } from "@/types";
+import type { RegisterFormValues } from '@/features/auth/types';
+import type { ApiResponse } from '@/types';
+
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useMutation } from '@tanstack/react-query';
+
+import { API_ROUTES } from '@/constants';
+import { apiClient } from '@/lib';
 
 interface RegisterContextValue {
   register: (data: RegisterFormValues) => Promise<void>;
@@ -23,25 +25,26 @@ export function RegisterProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync, isPending, error } = registerMutation;
 
-  const value = useMemo<RegisterContextValue>(() => ({
-    register: async (data: RegisterFormValues) => {
-      await mutateAsync(data);
-    },
-    isLoading: isPending,
-    error,
-  }), [mutateAsync, isPending, error]);
-
-  return (
-    <RegisterContext.Provider value={value}>
-      {children}
-    </RegisterContext.Provider>
+  const value = useMemo<RegisterContextValue>(
+    () => ({
+      register: async (data: RegisterFormValues) => {
+        await mutateAsync(data);
+      },
+      isLoading: isPending,
+      error,
+    }),
+    [mutateAsync, isPending, error],
   );
+
+  return <RegisterContext.Provider value={value}>{children}</RegisterContext.Provider>;
 }
 
 export function useRegister() {
   const context = useContext(RegisterContext);
+
   if (context === undefined) {
-    throw new Error("useRegister must be used within a RegisterProvider");
+    throw new Error('useRegister must be used within a RegisterProvider');
   }
+
   return context;
 }

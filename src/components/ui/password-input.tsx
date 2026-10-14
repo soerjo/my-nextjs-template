@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import type { UseFormRegister } from "react-hook-form";
+import type { UseFormRegister } from 'react-hook-form';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface PasswordInputProps {
@@ -23,7 +24,7 @@ export function PasswordInput({
   name,
   label,
   register,
-  placeholder = "Enter password",
+  placeholder = 'Enter password',
   error,
   description,
   required,
@@ -39,27 +40,25 @@ export function PasswordInput({
       </Label>
       <div className="relative">
         <Input
-          id={name}
-          type={showPassword ? "text" : "password"}
-          placeholder={placeholder}
           aria-invalid={invalid}
           className="pr-9"
+          id={name}
+          placeholder={placeholder}
+          type={showPassword ? 'text' : 'password'}
           {...register(name)}
         />
         <Button
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
+          size="icon-sm"
           type="button"
           variant="ghost"
-          size="icon-sm"
           onClick={() => setShowPassword((visible) => !visible)}
-          aria-label={showPassword ? "Hide password" : "Show password"}
-          className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
         >
           {showPassword ? <EyeOff /> : <Eye />}
         </Button>
       </div>
-      {description ? (
-        <p className="text-xs text-muted-foreground">{description}</p>
-      ) : null}
+      {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );

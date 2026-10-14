@@ -1,5 +1,6 @@
-import { APP_NAME } from "@/constants";
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
+
+import { APP_NAME } from '@/constants';
 
 export const metadata: Metadata = {
   title: `Login | ${APP_NAME}`,

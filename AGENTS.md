@@ -19,10 +19,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - shadcn/ui (Radix base) — primitives in `src/components/ui`, theme tokens in `src/app/globals.css`
 - TanStack React Query wired up via `src/providers/query-provider.tsx` (staleTime: 60s, no refetch on focus)
 
-## Stale config files (ignore these)
-
-- `.eslintrc.json` — legacy format; ESLint 9 uses flat config (`eslint.config.mjs`)
-
 ## Architecture
 
 Feature-based folder structure under `src/`:
@@ -180,3 +176,54 @@ Bounded, ordered checklist for 11 UI-only frontend improvements. Context: all AP
   - [x] `lint-staged` runs ESLint (and Prettier if configured) on staged files only — `package.json` `lint-staged`: `*.{ts,tsx}` → `eslint --fix` then `prettier --write`
   - [x] Verify: a commit with a lint error is blocked; a clean commit succeeds; `bun install` re-installs hooks — real commit with a `@typescript-eslint/no-explicit-any` error was blocked (`husky - pre-commit script failed (code 1)`); a clean commit succeeded; test file removed and tree restored
 <!-- END:template-improvements -->
+
+<!-- BEGIN:upgrade-priorities -->
+## Upgrade priorities P0-P2
+
+Bounded, ordered checklist from the P0/P1/P2 upgrade-priority analysis. Bun only (never npm). Keep every step independently verifiable. Do not start any step until its dependencies are complete.
+
+Ordering note: P1.2 (port legacy ESLint rules) MUST be completed before or alongside P0.2 (delete `.eslintrc.json`), so no rules are lost.
+
+- [x] **P0.1 Add `bun run test` to CI checks job**
+  - [x] Insert a test step in `.github/workflows/ci.yml` under the `checks` job, after type check and before `bun run build` — added `Test` step (`run: bun run test`) between `Type check` and `Build`
+  - [x] Step runs `bun run test` (non-watch `vitest run` from `package.json`)
+  - [x] Verify: `bun run test` passes locally (3/3); workflow YAML lints (`python3 -c yaml.safe_load`) clean
+
+- [x] **P1.2 Port essential legacy ESLint rules into `eslint.config.mjs` (DO FIRST, before P0.2)**
+  - [x] Read `.eslintrc.json` in full to inventory its rules, plugins, extends, and overrides — inventoried: `no-console`, `react/jsx-uses-react`, `react-hooks/exhaustive-deps`, `jsx-a11y/*` (2), `prettier/prettier`, `unused-imports/*`, `@typescript-eslint/no-unused-vars`, `import/order`, `react/self-closing-comp`, `react/jsx-sort-props`, `padding-line-between-statements`
+  - [x] Port any rules not already implied by `core-web-vitals` + `typescript` into `eslint.config.mjs` (flat config) — ported `no-console`, `react/jsx-uses-react`, `react-hooks/exhaustive-deps`, the two `jsx-a11y` rules, `@typescript-eslint/no-unused-vars`, plus the legacy formatters
+  - [x] Drop rules that are obsolete or superseded by the flat config — dropped `prettier/prettier` (Prettier via lint-staged) and `unused-imports/*` (plugin not installed; covered by `@typescript-eslint/no-unused-vars`); set purely stylistic high-volume rules (`import/order`, `react/jsx-sort-props`, `padding-line-between-statements`, `react/self-closing-comp`) to `"off"` after they produced ~240 auto-fixable warnings with no correctness value
+  - [x] Verify: `bun run lint` exit 0 (3 meaningful `no-console` warnings ≤ 10; ran `eslint --fix` first, then downgraded chatty rules); `bunx tsc --noEmit` 0 errors; `bun run test` passes (3/3)
+
+- [x] **P0.2 Remove stale config files**
+  - [x] Consolidate any relevant variables from `example.env.local` into `.env.example` first — `rg` found none of `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`NEXT_PUBLIC_BACKEND_URL` referenced in code (only in `example.env.local` itself); documented `NEXT_PUBLIC_BACKEND_URL` with a consistent 2-line comment noting it is not read by the app, and listed the unused `GOOGLE_*` vars as commented-out deprecated entries
+  - [x] Delete `example.env.local` — removed
+  - [x] Delete `.eslintrc.json` (only after P1.2 rules are ported) — removed; P1.2 rules already ported into `eslint.config.mjs`
+  - [x] Update `AGENTS.md` "Stale config files" note if it still references `.eslintrc.json` — entire "Stale config files (ignore these)" section removed (no longer referenced anywhere)
+  - [x] Verify: `.env.example` documents all needed vars; `bun run lint` exit 0 (3 `no-console` warnings); `bunx tsc --noEmit` 0 errors; both files confirmed gone via `ls`
+
+- [x] **P1.1 Vitest coverage setup**
+  - [x] Install `@vitest/coverage-v8` via Bun (`bun add -d @vitest/coverage-v8`) — installed `@vitest/coverage-v8@5.0.4` (matches `vitest@^5.0.4`)
+  - [x] Add coverage config to `vitest.config.ts` (provider `v8`, sensible reporters/thresholds) — `provider: 'v8'`, reporters `['text', 'html']`, includes `src/**/*.{ts,tsx}`, excludes tests/types/barrels/`app`/`providers`; thresholds set just below current smoke-test coverage (`lines` 8, `statements` 8, `functions` 12, `branches` 10) so the template's floor is enforced without going red
+  - [x] Add a `test:coverage` script to `package.json` — `"test:coverage": "vitest run --coverage"`
+  - [x] Verify: `bun run test:coverage` produces a report; `bunx tsc --noEmit` 0 errors — coverage report emitted (text summary + `coverage/index.html`, `coverage/` gitignored); `bunx tsc --noEmit` 0 errors; `bun run lint` exit 0 (same 3 pre-existing `no-console` warnings)
+
+- [x] **P1.3 Update `@types/node` to `^22`**
+  - [x] Bump `@types/node` to `^22` via Bun — `bun add -d '@types/node@^22'` → `@types/node@22.20.5`
+  - [x] Verify: `bun install` clean, `bunx tsc --noEmit` 0 errors, `bun run build` success — `bun install --frozen-lockfile` no changes; `tsc` exit 0; build compiled, 8/8 static pages prerendered
+
+- [x] **P2.1 Minor/patch dependency bumps via `bun update`**
+  - [x] Run `bun update` scoped to minor/patch (next, radix-ui packages, lucide-react, @tanstack/react-query, @vitejs/plugin-react, etc.) — plain `bun update` (respects `package.json` semver ranges, no `--latest`); direct bumps: `@hookform/resolvers` 5.2.2→5.9.1, `@tanstack/react-query` 5.97.0→5.104.2, `lucide-react` 1.55.0→1.57.0, `react-hook-form` 7.72.1→7.90.0, `zod` 4.3.6→4.6.7, `zustand` 5.0.12→5.0.15, `@testing-library/user-event` 14.6.7→14.6.8, `@types/react`/`@types/react-dom` →19.3.0, `eslint` →9.39.5, `tailwindcss`/`@tailwindcss/postcss` →4.3.3, `typescript` →5.9.3; `next`/`react`/`react-dom`/`eslint-config-next` pinned, `radix-ui`/`@vitejs/plugin-react` already latest
+  - [x] Review the diff and keep only minor/patch moves (revert any unintended majors) — all moves stay within the same major; no unintended majors, nothing to revert
+  - [x] Verify: `bun run lint` exit 0 (3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors, `bun run test` passes (3/3), `bun run build` success (8/8 static pages prerendered)
+
+- [x] **P2.2 Pin Dockerfile runner image to a specific node:22-alpine patch**
+  - [x] Replace `node:22-alpine` in the `runner` stage with a specific patch tag (e.g. `node:22.x.y-alpine`) — pinned `runner` to `node:22.23.3-alpine` (latest Node 22 patch per `nodejs.org/dist/index.json`; tag confirmed present on Docker Hub: `22.23.3-alpine`)
+  - [x] Verify: Dockerfile syntax check — single-line `FROM` change only (line 27), all three stages well-formed (`oven/bun:1`, `oven/bun:1`, `node:22.23.3-alpine`), no other edits
+  - [x] `docker build -t my-nextjs-template .` exit 0; container smoke-tests return 200 — parent-verified docker build exit 0 (image sha256:68f65b6a96fc38e937c72deb823e39abfbff8c61aa001d323dfaa80b7eeddb18)
+
+- [x] **P2.3 Add security audit step to CI**
+  - [x] Add a dependency security audit step (e.g. `bun audit` / `bun pm audit` or an equivalent scanner) to `.github/workflows/ci.yml` — audit step `bun audit` added non-blocking (`continue-on-error: true`) before Lint
+  - [x] Decide failure vs. warning policy for findings and document it in the step — warning policy documented in workflow comment
+  - [x] Verify: workflow YAML lints clean; audit step runs and reports as expected — YAML validated
+<!-- END:upgrade-priorities -->
