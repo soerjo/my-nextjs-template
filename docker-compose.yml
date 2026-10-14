@@ -1,26 +1,52 @@
+# Docker Compose Configuration
+
+# Usage instructions:
+# 1. Production mode (standalone runner):
+#    docker compose --profile prod up -d --build
+#
+# 2. Development mode (hot reload dev server):
+#    docker compose --profile dev up --build
+
 services:
-  my-nextjs-template:
+  app:
+    profiles: ["prod"]
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-My App}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3050}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3050}
-    image: my-nextjs-template:latest
+      target: runner
     container_name: my-nextjs-template
-    restart: unless-stopped
     ports:
-      # host:container
-      - "3050:3000"
+      - "3100:3000"
     environment:
-      NODE_ENV: production
-      PORT: "3000"
-      HOSTNAME: "0.0.0.0"
-      NEXT_TELEMETRY_DISABLED: "1"
-    networks:
-      - internal_net
+      - NEXT_PUBLIC_APP_NAME=
+      - NEXT_PUBLIC_APP_URL=
+      - NEXT_PUBLIC_API_URL=
+      - API_PROXY_TARGET=http://host.docker.internal:5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
-networks:
-  internal_net:
-    external: true
+  app-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      target: development
+    container_name: my-nextjs-template-dev
+    ports:
+      - "3101:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_APP_NAME=
+      - NEXT_PUBLIC_APP_URL=
+      - NEXT_PUBLIC_API_URL=
+      - API_PROXY_TARGET=http://host.docker.internal:5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
