@@ -52,6 +52,7 @@ services:
       - NEXT_PUBLIC_APP_URL=http://localhost:3101
       - NEXT_PUBLIC_API_URL=
       - API_PROXY_TARGET=http://host.docker.internal:5000
+      - NEXT_PUBLIC_DUMMY_MODE=${NEXT_PUBLIC_DUMMY_MODE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
