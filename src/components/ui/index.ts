@@ -1,3 +1,9 @@
 export { AppLink } from './app-link';
 export { PasswordInput } from './password-input';
 export { Skeleton } from './skeleton';
+export { ChipToken } from './chip-token';
+export { SearchMultiSelect } from './search-multi-select';
+export { InputWithUnit } from './input-with-unit';
+export { StatCard } from './stat-card';
+export { BalanceCard } from './balance-card';
+export { SegmentedTabs } from './segmented-tabs';

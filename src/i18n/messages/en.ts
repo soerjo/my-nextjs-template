@@ -1,4 +1,4 @@
-export default {
+const messages = {
   navbar: {
     home: 'Home',
     examples: 'Examples:',
@@ -31,3 +31,5 @@ export default {
     english: 'English',
   },
 };
+
+export default messages;

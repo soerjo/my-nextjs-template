@@ -40,8 +40,7 @@ export function ResetPasswordForm() {
     try {
       await resetPassword({ ...data, token });
       setIsSuccess(true);
-    } catch (err) {
-      console.error('Reset password error:', err);
+    } catch {
       setIsApiError(true);
     }
   }

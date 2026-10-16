@@ -41,7 +41,7 @@ export function PasswordInput({
       <div className="relative">
         <Input
           aria-invalid={invalid}
-          className="pr-9"
+          className="pr-11"
           id={name}
           placeholder={placeholder}
           type={showPassword ? 'text' : 'password'}

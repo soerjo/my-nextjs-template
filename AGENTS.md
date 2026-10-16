@@ -35,7 +35,7 @@ Feature-based folder structure under `src/`:
 - `src/utils/` — pure utility functions (`cn`)
 - `src/config/` — app config derived from env vars
 - `src/constants/` — static values (routes, API paths)
-- `src/app/` — Next.js App Router. Route groups: `(main)/`, `(auth)/`.
+- `src/app/` — Next.js App Router. Route groups: `(marketing)/`, `(auth)/`, `(dashboard)/`.
 
 Every module directory has a barrel `index.ts` — import via `@/features/home/components`, not deep paths.
 
@@ -292,3 +292,90 @@ Bounded, ordered checklist for adding example pages (table, dashboard, profile-f
   - [x] `docker build -t my-nextjs-template .` exit 0 — parent-verified (image sha256:397183ce...849c65)
   - [x] Smoke test `/`, `/login`, `/examples/table`, `/examples/dashboard`, `/examples/profile-form`, `/examples/upload` return 200 on `PORT=3100` — parent-verified
 <!-- END:example-pages -->
+
+<!-- BEGIN:dashboard-design-system -->
+## Dashboard design system
+
+Bounded, ordered checklist for unifying 3 reference designs (CONYEST finance dashboard, ECOM product form, MONETRA fintech dashboard) into ONE design system. Bun only (never npm). Feature-based structure (`features/finance/`, `features/products/`), barrel exports, `queryKeys` factory, semantic oklch tokens only (no hex, no `zinc-*`, no manual `dark:` overrides). Do not start any phase until its dependencies are complete. All items start pending — mark only after verifying. Full brief at `/tmp/dashboard-brief.md`.
+
+Unified decisions: primary = forest green (buttons), accent lime token (badges/active bars/CTAs), chart-1 lime / chart-2 forest, `--surface-inverse` for dark cards (balance + bank card); form tabs freely navigable (not a sequential stepper).
+
+- [x] **Phase 1 Tokens & primitives**
+  - [x] Add tokens (`--lime`/accent, `--surface-inverse`, chart palette) in `src/app/globals.css` (`:root` + `.dark`, oklch, `@theme inline` mappings)
+  - [x] `bunx --bun shadcn@latest add -y avatar badge table tabs breadcrumb popover command select calendar checkbox tooltip separator progress sheet` (skip ones already present: progress exists)
+  - [x] Create reusable components under `src/components/ui/`: `chip-token.tsx` (removable badge w/ color dot), `search-multi-select.tsx` (Command+Popover, async-filterable options), `input-with-unit.tsx` (Input + trailing small Select), `stat-card.tsx`, `balance-card.tsx` (dark inverse surface), `segmented-tabs.tsx`
+  - [x] Update `src/components/ui/index.ts` barrel
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 2 Dashboard shell**
+  - [x] `AppSidebar` icon rail variant (icon-only w/ Tooltip hover labels, avatar on top, settings/help/logout at bottom, Sheet for mobile)
+  - [x] Header with pill nav + search input + bell + avatar dropdown
+  - [x] Route group `src/app/(dashboard)/dashboard/layout.tsx`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 3 Finance dashboard (Monetra layout)**
+  - [x] Greeting header, `SmartWalletCard` (+Add New badge, 3 category icon tiles)
+  - [x] 4 `StatCard`s, `QuickSend` avatar stack, `BankCard` (masked number, Deposit/Transfer), `QuickAction` grid, `StarterPlan` CTA
+  - [x] Mock service + React Query hooks + `queryKeys.finance.*` entries, `Skeleton` while loading
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 4 Cash Flow chart**
+  - [x] Recharts `BarChart` monthly, custom black rounded Tooltip, segmented tabs (Income/Expenses/Savings), period Select (Yearly/Monthly), active bar lime
+  - [x] Colors via `var(--chart-1)`/`var(--chart-2)`/`var(--border)`/`var(--muted-foreground)`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 5 CONYEST analytics screen**
+  - [x] Route `/analytics` reusing CashflowChart + StatCard + BalanceCard + donut PieChart with legend
+  - [x] Recent Transactions TanStack Table with status Badges (default=Completed, destructive=Failed, secondary+amber text=Pending), This Month filter
+  - [x] Mock service + `queryKeys.finance.transactions`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 6 Product form `/products/new` (ecom)**
+  - [x] Breadcrumb, 6 Tabs (only "Variations and price" implemented; others render placeholder)
+  - [x] `SearchMultiSelect` for Colour/Size (mock async service), `ChipToken` selection
+  - [x] Variant matrix grid = cartesian product of colours x sizes with sparse overrides (RHF + zodResolver + useFieldArray; per-row stock/price/discount inline Inputs; Price/Discount merged column per colour group; removing a chip removes related rows)
+  - [x] Grouped "Price & offer" sub-panel (Price + currency Select, Promo price + type Select, date range via Calendar+Popover)
+  - [x] Zod schema in `features/products/types`, unit test (vitest) for matrix builder logic
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run test` passes, `bun run build` success
+
+- [x] **Phase 7 Final verification**
+  - [x] `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass
+  - [x] Smoke test routes `/dashboard`, `/analytics`, `/products/new` return 200 (parent runs server on `PORT=3100` — do NOT start servers, do NOT touch `/proc`, no process discovery)
+<!-- END:dashboard-design-system -->
+
+<!-- BEGIN:ss-blocks-wiring -->
+## SS Blocks wiring checklist
+
+- [x] **1. Auth routes (`/verify-email`, `/2fa`)** — installed and wired (`verify-email-01`, `two-factor-authentication-01`); existing login/register/forgot/reset kept with existing auth logic (collision handled)
+- [x] **2. Dashboard Demo (`/dashboard-v2`)** — shell, sidebar, header, footer, and Sales Metrics chart (`chart-component-01`)
+- [x] **3. Marketing Route Group `(marketing)`** — layout with footer (`footer-component-11`), landing `/` (hero-01 + HomeHero + logo-cloud-01 + testimonials-26 + faq-21), `/about` (about-us-page-01 + timeline-05/07 + hero-41 + logo-cloud-10), `/contact`, `/blog` (blog-15 + blog-17), `/portfolio`, `/events`, `/team`, `/faq`, `/gallery`, `/schedule`, `/account-settings`, `/email-application`, `/form-layout`, `/file-upload`
+- [x] **4. Cleanup & Quality** — raw block orphan folders removed; helper scripts removed; `src/lib/utils.ts` fixed to re-export `cn` from `@/utils`
+<!-- END:ss-blocks-wiring -->
+
+<!-- BEGIN:global-sidebar-shell -->
+## Global sidebar shell checklist
+
+- [x] **1. Shared sidebar shell component (`SsAppShell`)** — created in `src/components/layouts/ss-app-shell.tsx` combining `SidebarProvider`, collapsible `Sidebar`, header with trigger + search + notifications + language + theme + user menu, and footer.
+- [x] **2. Navigation covering ALL routes** — grouped into Overview (`/`, `/dashboard`, `/dashboard-v2`, `/analytics`), Apps (`/products/new`, `/email-application`, `/schedule`, `/file-upload`, `/form-layout`, `/account-settings`, `/events`), and Marketing (`/about`, `/blog`, `/contact`, `/portfolio`, `/team`, `/faq`, `/gallery`) with active states and badges.
+- [x] **3. Applied to all layouts except auth** — wired into `(marketing)/layout.tsx`, `(main)/layout.tsx`, `(dashboard)/layout.tsx`, and `dashboard-v2/layout.tsx`. Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/2fa`) excluded.
+- [x] **4. Refactored finance dashboard (`/dashboard`)** — wrapped via `(dashboard)/layout.tsx` using `SsAppShell`.
+- [x] **5. Final verification** — `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass successfully. Theme toggle hydration mismatch robustly fixed via CSS-only visibility toggle (`dark:hidden` / `dark:block`) with no mounted/disabled gating.
+<!-- END:global-sidebar-shell -->
+
+<!-- BEGIN:mui-density-restyle -->
+## MUI-density restyle checklist
+
+- [x] **F0. Foundation tokens** — elevation shadow vars (`--shadow-elevation-1`, `--shadow-elevation-4`, `--shadow-elevation-8`, `--shadow-elevation-24`) added to `src/app/globals.css` `@theme inline` (original `--radius-control` (4px) token removed in the adjustment below).
+- [x] **F1. Buttons & toggles** — `button.tsx`, `toggle.tsx`, `toggle-group.tsx`, `segmented-tabs.tsx` restyled with elevation-1 default shadow with hover elevation-4, segmented tabs 1px border group with filled muted selected state.
+- [x] **F2. Inputs family** — `input.tsx`, `select.tsx`, `textarea.tsx`, `input-group.tsx`, `password-input.tsx`, `input-otp.tsx`, `input-with-unit.tsx`, `search-multi-select.tsx` restyled with text-base, `font-medium`, primary border + 1px ring focus state.
+- [x] **F3. Selection controls** — checkbox 18px square 40px hit area, radio-group 20px circle with primary dot, switch MUI geometry (58x38 touch area, 34x14 track, 24px thumb), calendar selected day filled circle primary.
+- [x] **F4. Overlays & menus** — dialog elevation-24 + xl font-medium title; dropdown-menu elevation-8 items; popover & sheet elevation-8; tooltip solid dark bg + xs text.
+- [x] **F5. Data display** — card with elevation-1 + xl font-medium title; table spacious row padding + medium head; badge & chip-token pill; progress 4px track; pagination rounded-full primary active; breadcrumb '›' separator; navigation-menu font-medium; accordion/collapsible divider borders + py-4 font-medium trigger.
+- [x] **Adjustment (user feedback: heights too tall, radius too sharp)** — radii reverted to default shadcn tokens (`rounded-lg` controls/inputs/buttons/overlays, `rounded-md` dropdown item & checkbox, `rounded-xl` card, `rounded-full` kept for badge/chip-token/pagination/switch/radio/progress); removed unused `--radius-control` token from `globals.css`; heights stepped down: button h-10→h-9 (lg h-12→h-10), inputs family h-12→h-10 (sm h-9), otp slots size-12→size-10, textarea min-h-24→min-h-20, dropdown item h-10→h-9, toggle h-10→h-9 (lg h-12→h-10), navigation-menu h-10→h-9, segmented-tabs h-10→h-9, pagination size-10→size-9; kept `font-medium`/`text-base` on inputs and all elevation shadows. Verified: lint 0/0, tsc 0 errors, build success.
+<!-- BEGIN:select-combobox-upgrade -->
+## Select & Combobox upgrade checklist (Fase A-C)
+
+- [x] **Fase A. Select (`select.tsx`)** — trigger w-full default with open-state styling (`data-[state=open]:border-primary data-[state=open]:ring-1`) and rotating chevron icon (`group-data-[state=open]/select-trigger:rotate-180`); item h-9 with `data-[state=checked]:bg-primary/10` and `font-medium`; optional `clearable` prop support with inline clear button when value non-empty.
+- [x] **Fase B. Multi-Select & Command (`search-multi-select.tsx`, `command.tsx`)** — Command input updated to h-10 with standard input border/bg; selected values rendered as removable `ChipToken` pills inside `SearchMultiSelect`; filterable popover includes "Select all" and "Clear all" footer action buttons; empty state styled with `SearchX` icon; Command item selected state enhanced with `bg-accent` / check indicator styles.
+- [x] **Fase C. Verification & Call Sites** — all call sites verified and working; `bun run lint` (0/0), `bunx tsc --noEmit`, `bun run test` (6/6), and `bun run build` (31 routes) all pass successfully.
+<!-- END:select-combobox-upgrade -->

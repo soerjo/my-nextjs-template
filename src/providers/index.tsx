@@ -2,6 +2,7 @@ import { ThemeProvider } from 'next-themes';
 import { AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/features/auth/providers/auth-provider';
 import { AppStoreProvider } from '@/stores';
 import defaultMessages from '@/i18n/messages/id.json';
@@ -25,7 +26,9 @@ export async function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider disableTransitionOnChange enableSystem attribute="class" defaultTheme="system">
         <AppStoreProvider>
           <QueryProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+            </AuthProvider>
           </QueryProvider>
           <ToasterProvider />
         </AppStoreProvider>
