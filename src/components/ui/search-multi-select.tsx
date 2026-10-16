@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, SearchX } from 'lucide-react';
 import { cn } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -43,6 +43,14 @@ export function SearchMultiSelect({
     }
   };
 
+  const selectAll = () => {
+    onChange(options.map((opt) => opt.value));
+  };
+
+  const clearAll = () => {
+    onChange([]);
+  };
+
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -51,7 +59,7 @@ export function SearchMultiSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full h-10 justify-between rounded-lg font-medium text-muted-foreground hover:text-foreground"
+            className="w-full h-10 justify-between rounded-lg font-medium text-muted-foreground hover:text-foreground data-[state=open]:border-primary data-[state=open]:ring-1 data-[state=open]:ring-primary"
           >
             {value.length > 0 ? `${value.length} selected` : placeholder}
             <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
@@ -61,12 +69,20 @@ export function SearchMultiSelect({
           <Command>
             <CommandInput placeholder="Search option..." />
             <CommandList>
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
+              <CommandEmpty className="py-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <SearchX className="size-6 opacity-50" />
+                <span>{emptyMessage}</span>
+              </CommandEmpty>
               <CommandGroup>
                 {options.map((option) => {
                   const isSelected = value.includes(option.value);
                   return (
-                    <CommandItem key={option.value} value={option.label} onSelect={() => toggleOption(option.value)}>
+                    <CommandItem
+                      key={option.value}
+                      value={option.label}
+                      onSelect={() => toggleOption(option.value)}
+                      className={cn(isSelected && 'bg-primary/15 font-medium')}
+                    >
                       <div
                         className={cn(
                           'mr-2 flex size-4 items-center justify-center rounded-sm border border-primary',
@@ -87,6 +103,30 @@ export function SearchMultiSelect({
                 })}
               </CommandGroup>
             </CommandList>
+            <div className="flex items-center justify-between border-t border-border px-2 py-1.5 bg-muted/20">
+              <Button
+                variant="ghost"
+                size="xs"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.preventDefault();
+                  selectAll();
+                }}
+              >
+                Select all
+              </Button>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.preventDefault();
+                  clearAll();
+                }}
+              >
+                Clear all
+              </Button>
+            </div>
           </Command>
         </PopoverContent>
       </Popover>

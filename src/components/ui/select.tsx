@@ -3,10 +3,65 @@
 import * as React from 'react';
 import { cn } from '@/utils/index';
 import { Select as SelectPrimitive } from 'radix-ui';
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from 'lucide-react';
+import { ChevronDownIcon, CheckIcon, ChevronUpIcon, XIcon } from 'lucide-react';
 
-function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+interface SelectContextValue {
+  clearable: boolean;
+  clear: () => void;
+  hasValue: boolean;
+}
+
+const SelectContext = React.createContext<SelectContextValue>({
+  clearable: false,
+  clear: () => {},
+  hasValue: false,
+});
+
+function Select({
+  clearable = false,
+  value,
+  defaultValue,
+  onValueChange,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Root> & { clearable?: boolean }) {
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = React.useState<string | undefined>(defaultValue);
+  const currentValue = isControlled ? value : internalValue;
+
+  const handleValueChange = React.useCallback(
+    (next: string) => {
+      if (!isControlled) {
+        setInternalValue(next);
+      }
+      onValueChange?.(next);
+    },
+    [isControlled, onValueChange],
+  );
+
+  const clear = React.useCallback(() => {
+    handleValueChange('');
+  }, [handleValueChange]);
+
+  const contextValue = React.useMemo(
+    () => ({
+      clearable,
+      clear,
+      hasValue: currentValue != null && currentValue !== '',
+    }),
+    [clearable, clear, currentValue],
+  );
+
+  return (
+    <SelectContext.Provider value={contextValue}>
+      <SelectPrimitive.Root
+        data-slot="select"
+        value={value}
+        defaultValue={defaultValue}
+        onValueChange={handleValueChange}
+        {...props}
+      />
+    </SelectContext.Provider>
+  );
 }
 
 function SelectGroup({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Group>) {
@@ -25,19 +80,48 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: 'sm' | 'default';
 }) {
+  const { clearable, clear, hasValue } = React.useContext(SelectContext);
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-3 pl-3 text-sm font-medium whitespace-nowrap transition-colors outline-none select-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-10 data-[size=sm]:h-9 data-[size=sm]:rounded-lg *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "group/select-trigger flex w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-2 pr-3 pl-3 text-sm font-medium whitespace-nowrap transition-colors outline-none select-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-10 data-[size=sm]:h-9 data-[size=sm]:rounded-lg data-[state=open]:border-primary data-[state=open]:ring-1 data-[state=open]:ring-primary *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
     >
       {children}
+      {clearable && hasValue && (
+        <span
+          role="button"
+          aria-label="Clear selection"
+          data-slot="select-clear"
+          tabIndex={-1}
+          className="flex size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            clear();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              event.stopPropagation();
+              clear();
+            }
+          }}
+        >
+          <XIcon className="size-3.5" />
+        </span>
+      )}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+        <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground transition-transform group-data-[state=open]/select-trigger:rotate-180" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -96,7 +180,7 @@ function SelectItem({ className, children, ...props }: React.ComponentProps<type
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex h-9 w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:font-medium data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}
