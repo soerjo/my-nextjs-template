@@ -51,7 +51,7 @@ export function SearchMultiSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full h-12 justify-between rounded-[var(--radius-control)] font-normal text-muted-foreground hover:text-foreground"
+            className="w-full h-10 justify-between rounded-lg font-medium text-muted-foreground hover:text-foreground"
           >
             {value.length > 0 ? `${value.length} selected` : placeholder}
             <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />

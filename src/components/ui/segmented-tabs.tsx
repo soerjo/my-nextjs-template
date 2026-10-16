@@ -17,7 +17,7 @@ export function SegmentedTabs({ tabs, value, onValueChange, className }: Segment
   return (
     <div
       className={cn(
-        'inline-flex h-10 items-center justify-center rounded-[var(--radius-control)] border border-border bg-transparent p-1 text-muted-foreground',
+        'inline-flex h-9 items-center justify-center rounded-lg border border-border bg-transparent p-1 text-muted-foreground',
         className,
       )}
     >
@@ -29,7 +29,7 @@ export function SegmentedTabs({ tabs, value, onValueChange, className }: Segment
             type="button"
             onClick={() => onValueChange(tab.value)}
             className={cn(
-              'inline-flex h-full items-center justify-center whitespace-nowrap rounded-[var(--radius-control)] px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+              'inline-flex h-full items-center justify-center whitespace-nowrap rounded-lg px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
               isActive ? 'bg-muted text-foreground font-medium shadow-xs' : 'hover:text-foreground',
             )}
           >
