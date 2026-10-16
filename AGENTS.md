@@ -35,7 +35,7 @@ Feature-based folder structure under `src/`:
 - `src/utils/` — pure utility functions (`cn`)
 - `src/config/` — app config derived from env vars
 - `src/constants/` — static values (routes, API paths)
-- `src/app/` — Next.js App Router. Route groups: `(main)/`, `(auth)/`.
+- `src/app/` — Next.js App Router. Route groups: `(marketing)/`, `(auth)/`, `(dashboard)/`.
 
 Every module directory has a barrel `index.ts` — import via `@/features/home/components`, not deep paths.
 
