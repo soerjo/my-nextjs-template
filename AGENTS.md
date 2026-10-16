@@ -292,3 +292,53 @@ Bounded, ordered checklist for adding example pages (table, dashboard, profile-f
   - [x] `docker build -t my-nextjs-template .` exit 0 — parent-verified (image sha256:397183ce...849c65)
   - [x] Smoke test `/`, `/login`, `/examples/table`, `/examples/dashboard`, `/examples/profile-form`, `/examples/upload` return 200 on `PORT=3100` — parent-verified
 <!-- END:example-pages -->
+
+<!-- BEGIN:dashboard-design-system -->
+## Dashboard design system
+
+Bounded, ordered checklist for unifying 3 reference designs (CONYEST finance dashboard, ECOM product form, MONETRA fintech dashboard) into ONE design system. Bun only (never npm). Feature-based structure (`features/finance/`, `features/products/`), barrel exports, `queryKeys` factory, semantic oklch tokens only (no hex, no `zinc-*`, no manual `dark:` overrides). Do not start any phase until its dependencies are complete. All items start pending — mark only after verifying. Full brief at `/tmp/dashboard-brief.md`.
+
+Unified decisions: primary = forest green (buttons), accent lime token (badges/active bars/CTAs), chart-1 lime / chart-2 forest, `--surface-inverse` for dark cards (balance + bank card); form tabs freely navigable (not a sequential stepper).
+
+- [x] **Phase 1 Tokens & primitives**
+  - [x] Add tokens (`--lime`/accent, `--surface-inverse`, chart palette) in `src/app/globals.css` (`:root` + `.dark`, oklch, `@theme inline` mappings)
+  - [x] `bunx --bun shadcn@latest add -y avatar badge table tabs breadcrumb popover command select calendar checkbox tooltip separator progress sheet` (skip ones already present: progress exists)
+  - [x] Create reusable components under `src/components/ui/`: `chip-token.tsx` (removable badge w/ color dot), `search-multi-select.tsx` (Command+Popover, async-filterable options), `input-with-unit.tsx` (Input + trailing small Select), `stat-card.tsx`, `balance-card.tsx` (dark inverse surface), `segmented-tabs.tsx`
+  - [x] Update `src/components/ui/index.ts` barrel
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 2 Dashboard shell**
+  - [x] `AppSidebar` icon rail variant (icon-only w/ Tooltip hover labels, avatar on top, settings/help/logout at bottom, Sheet for mobile)
+  - [x] Header with pill nav + search input + bell + avatar dropdown
+  - [x] Route group `src/app/(dashboard)/dashboard/layout.tsx`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 3 Finance dashboard (Monetra layout)**
+  - [x] Greeting header, `SmartWalletCard` (+Add New badge, 3 category icon tiles)
+  - [x] 4 `StatCard`s, `QuickSend` avatar stack, `BankCard` (masked number, Deposit/Transfer), `QuickAction` grid, `StarterPlan` CTA
+  - [x] Mock service + React Query hooks + `queryKeys.finance.*` entries, `Skeleton` while loading
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 4 Cash Flow chart**
+  - [x] Recharts `BarChart` monthly, custom black rounded Tooltip, segmented tabs (Income/Expenses/Savings), period Select (Yearly/Monthly), active bar lime
+  - [x] Colors via `var(--chart-1)`/`var(--chart-2)`/`var(--border)`/`var(--muted-foreground)`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 5 CONYEST analytics screen**
+  - [x] Route `/analytics` reusing CashflowChart + StatCard + BalanceCard + donut PieChart with legend
+  - [x] Recent Transactions TanStack Table with status Badges (default=Completed, destructive=Failed, secondary+amber text=Pending), This Month filter
+  - [x] Mock service + `queryKeys.finance.transactions`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 6 Product form `/products/new` (ecom)**
+  - [x] Breadcrumb, 6 Tabs (only "Variations and price" implemented; others render placeholder)
+  - [x] `SearchMultiSelect` for Colour/Size (mock async service), `ChipToken` selection
+  - [x] Variant matrix grid = cartesian product of colours x sizes with sparse overrides (RHF + zodResolver + useFieldArray; per-row stock/price/discount inline Inputs; Price/Discount merged column per colour group; removing a chip removes related rows)
+  - [x] Grouped "Price & offer" sub-panel (Price + currency Select, Promo price + type Select, date range via Calendar+Popover)
+  - [x] Zod schema in `features/products/types`, unit test (vitest) for matrix builder logic
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run test` passes, `bun run build` success
+
+- [ ] **Phase 7 Final verification**
+  - [ ] `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass
+  - [ ] Smoke test routes `/dashboard`, `/analytics`, `/products/new` return 200 (parent runs server on `PORT=3100` — do NOT start servers, do NOT touch `/proc`, no process discovery)
+<!-- END:dashboard-design-system -->
