@@ -359,7 +359,7 @@ Unified decisions: primary = forest green (buttons), accent lime token (badges/a
 - [x] **2. Navigation covering ALL routes** — grouped into Overview (`/`, `/dashboard`, `/dashboard-v2`, `/analytics`), Apps (`/products/new`, `/email-application`, `/schedule`, `/file-upload`, `/form-layout`, `/account-settings`, `/events`), and Marketing (`/about`, `/blog`, `/contact`, `/portfolio`, `/team`, `/faq`, `/gallery`) with active states and badges.
 - [x] **3. Applied to all layouts except auth** — wired into `(marketing)/layout.tsx`, `(main)/layout.tsx`, `(dashboard)/layout.tsx`, and `dashboard-v2/layout.tsx`. Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/2fa`) excluded.
 - [x] **4. Refactored finance dashboard (`/dashboard`)** — wrapped via `(dashboard)/layout.tsx` using `SsAppShell`.
-- [x] **5. Final verification** — `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass successfully.
+- [x] **5. Final verification** — `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass successfully. Theme toggle hydration mismatch robustly fixed via CSS-only visibility toggle (`dark:hidden` / `dark:block`) with no mounted/disabled gating.
 <!-- END:global-sidebar-shell -->
 
 <!-- BEGIN:mui-density-restyle -->

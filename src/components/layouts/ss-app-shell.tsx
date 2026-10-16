@@ -56,7 +56,6 @@ import {
   Search,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks';
-import { useIsMounted } from '@/hooks';
 
 const OVERVIEW_ITEMS = [
   { href: '/', label: 'Home', icon: Home },
@@ -91,8 +90,6 @@ export function SsAppShell({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   const { logout, isLoading } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
-  const mounted = useIsMounted();
-  const isDark = resolvedTheme === 'dark';
 
   const switchLocale = (newLocale: string) => {
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
@@ -223,12 +220,12 @@ export function SsAppShell({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                disabled={!mounted}
-                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                 className="rounded-full text-muted-foreground hover:text-foreground"
                 aria-label="Toggle Theme"
               >
-                {mounted && isDark ? <Moon className="size-4" /> : <Sun className="size-4" />}
+                <Sun className="size-4 dark:hidden" />
+                <Moon className="hidden size-4 dark:block" />
               </Button>
 
               <DropdownMenu>
