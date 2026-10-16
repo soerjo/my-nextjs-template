@@ -257,6 +257,13 @@ export function WeekView({ currentDate, events, onEventSelect, onEventCreate }: 
                   zIndex: positionedEvent.zIndex,
                 }}
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                  }
+                }}
+                role="presentation"
+                tabIndex={0}
               >
                 <div className="h-full w-full">
                   <EventItem

@@ -65,6 +65,7 @@ export function ProductFormView() {
     name: 'variants',
   });
 
+  /* eslint-disable-next-line react-hooks/incompatible-library */
   const watchedColours = watch('colours');
   const watchedSizes = watch('sizes');
 

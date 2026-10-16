@@ -21,6 +21,13 @@ export function CalendarCell({ time, children, className, onClick }: CalendarCel
   return (
     <div
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>);
+        }
+      }}
+      role="button"
+      tabIndex={0}
       className={cn('flex h-full flex-col overflow-hidden px-0.5 py-1 sm:px-1', className)}
       title={formattedTime}
     >

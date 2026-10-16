@@ -70,7 +70,18 @@ export function AppSidebar() {
 
             if (isMobile) {
               return (
-                <div key={item.href} className="w-full" onClick={() => setSidebarOpen(false)}>
+                <div
+                  key={item.href}
+                  className="w-full"
+                  onClick={() => setSidebarOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
                   {linkContent}
                 </div>
               );

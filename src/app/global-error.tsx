@@ -1,16 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
-
 import { Button } from '@/components/ui/button';
 
 import './globals.css';
 
 export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <html suppressHydrationWarning className="h-full antialiased" lang="en">
       <body className="min-h-full flex flex-col">

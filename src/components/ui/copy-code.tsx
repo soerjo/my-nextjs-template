@@ -32,9 +32,7 @@ function CopyCode({ code = 'javascript' }: CopyCodeProps) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }
-    } catch (err) {
-      console.error('Failed to copy', err);
-
+    } catch {
       // Show user feedback even if copy failed
       alert('Failed to copy code to clipboard');
     }
