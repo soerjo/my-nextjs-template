@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 ## Commands
@@ -18,6 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Tailwind CSS v4 via `@tailwindcss/postcss` — CSS-first config in `src/app/globals.css` (`@import "tailwindcss"` + `@theme` design tokens)
 - shadcn/ui (Radix base) — primitives in `src/components/ui`, theme tokens in `src/app/globals.css`
 - TanStack React Query wired up via `src/providers/query-provider.tsx` (staleTime: 60s, no refetch on focus)
+- Dummy API Mode: Set `NEXT_PUBLIC_DUMMY_MODE="true"` to mock all auth API requests with 200 success responses and simulated 300-500ms delay without backend hits.
 
 ## Architecture
 
@@ -227,3 +232,143 @@ Ordering note: P1.2 (port legacy ESLint rules) MUST be completed before or along
   - [x] Decide failure vs. warning policy for findings and document it in the step — warning policy documented in workflow comment
   - [x] Verify: workflow YAML lints clean; audit step runs and reports as expected — YAML validated
 <!-- END:upgrade-priorities -->
+
+<!-- BEGIN:example-pages -->
+## Example pages implementation
+
+Bounded, ordered checklist for adding example pages (table, dashboard, profile-form, upload) plus i18n. Bun only (never npm). Feature-based folder structure, barrel exports, semantic tokens, `queryKeys` factory. Do not start any phase until its dependencies are complete. All items start pending — mark only after verifying.
+
+- [x] **Fase 1 Fondasi**
+  - [x] Install `sonner`, `date-fns`, `@tanstack/react-table`, `recharts`, `react-dropzone` via Bun (`bun add`) (next-intl skipped to Fase 6)
+  - [x] Add Sonner `<Toaster />` in `src/providers/` (mounted once at app root)
+  - [x] Add `Skeleton` component to `src/components/ui/` (shadcn primitives, semantic tokens, barrel export)
+  - [x] Refactor `useAppStore` to a Zustand SSR-safe pattern (store factory + context provider) and use it for real
+  - [x] Add `AppHeader` nav group "Examples" with links to `/examples/table`, `/examples/dashboard`, `/examples/profile-form`, `/examples/upload`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Fase 2 `/examples/table`**
+  - [x] TanStack Table + React Query with server-side pagination + sorting
+  - [x] Mock service in `src/features/examples/services` with simulated delay
+  - [x] `Skeleton` loading state while fetching
+  - [x] Format date column with `date-fns`
+  - [x] Use `queryKeys.examples.table` from the query-keys factory
+  - [x] Barrel exports; semantic tokens; no hardcoded colors
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Fase 3 `/examples/dashboard`**
+  - [x] Recharts line + bar charts fed by mock data via React Query — `fetchExampleDashboard` (30 seeded daily points + summary) in `example-dashboard-service.ts`, `useExampleDashboard` hook using `queryKeys.examples.dashboard()`; `LineChart` (revenue) + `BarChart` (orders) in `example-dashboard-view.tsx`
+  - [x] `Skeleton` loading state while fetching — summary cards + both chart cards render skeleton placeholders on `isLoading`
+  - [x] Format axis labels with `date-fns` — `format(new Date(value), 'MMM d')` for X axis ticks, `'PPPP'` in the custom tooltip
+  - [x] Barrel exports; semantic tokens — updated `components`/`hooks`/`services` barrels + `queryKeys.examples.dashboard`; chart colors use `var(--chart-1)`/`var(--chart-2)`, grid `var(--border)`, ticks `var(--muted-foreground)`, tooltip on `popover`/`border` tokens (no hardcoded hex)
+  - [x] Verify: `bun run lint` exit 0 (3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors, `bun run test` passes (3/3), `bun run build` success (`/examples/dashboard` prerendered)
+
+- [x] **Fase 4 `/examples/profile-form`**
+  - [x] RHF + Zod + `useFieldArray` for a dynamic email list — `profileFormSchema` (`fullName`/`headline`/optional `bio` + `emails[]` of `{label,address}` with `min(1)`) in `features/examples/types`; `ExampleProfileFormView` wires `useForm` + `zodResolver` + `useFieldArray({ control, name: 'emails' })` with add/remove (remove disabled at one row)
+  - [x] Submit via React Query mutation — `useExampleProfileForm` (`useMutation`, `mutationKey: queryKeys.examples.profileForm()`) calling `submitExampleProfile` service (700ms delay, `fail` in full name triggers the error path)
+  - [x] Sonner toast on success/failure — `toast.success`/`toast.error` in the mutation's `onSuccess`/`onError` (app-root `ToasterProvider`)
+  - [x] Barrel exports; semantic tokens — updated `types`/`services`/`hooks`/`components` barrels; shadcn `Card`/`Input`/`Label`/`Button` + `text-destructive`/`text-muted-foreground`/`bg-muted/30`/`border-border` tokens, no hardcoded colors
+  - [x] Verify: `bun run lint` exit 0 (same 3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors, `bun run test` passes (3/3), `bun run build` success (`/examples/profile-form` prerendered)
+
+- [x] **Fase 5 `/examples/upload`**
+  - [x] `react-dropzone` drag & drop with file list preview — `useDropzone` (10MB `maxSize`) in `example-upload-view.tsx` with drag-active styling, per-file icon/size preview, and remove action
+  - [x] Mock upload with progress indicator — `useMutation` (`mutationKey: queryKeys.examples.upload()`) simulates 20→100% progress via `setTimeout`, rendered with shadcn `Progress` + percentage label; ~10% simulated failure exercises the error path
+  - [x] Sonner toast on completion/failure — `toast.success` / `toast.error` in mutation `onSuccess` / `onError` (app-root `ToasterProvider`)
+  - [x] Barrel exports; semantic tokens — `ExampleUploadView` exported from `components/index.ts`; uses `Card`/`Button`/`Progress` + `border-border`/`bg-muted`/`text-foreground`/`text-muted-foreground`/`text-destructive`/`bg-primary` tokens (file-type icons keep intentional accent colors)
+  - [x] Verify (quick, no build): `bun run lint` exit 0 (3 pre-existing `no-console` warnings), `bunx tsc --noEmit` 0 errors; route `src/app/(main)/examples/upload/page.tsx` renders `ExampleUploadView`
+
+- [x] **Fase 6 i18n (`next-intl`, locale via cookie, no URL prefix)**
+  - [x] Add `next-intl` provider (cookie-based locale, no locale-prefix routing)
+  - [x] Use `useTranslations` in components
+  - [x] Add locale switcher ID/EN in `AppHeader`
+  - [x] Translate navbar and the profile-form page
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Fase 7 Verifikasi final**
+  - [x] Polish: replace hardcoded file-type icon accents (`text-blue-500`/`text-emerald-500`/`text-amber-500`) in `example-upload-view.tsx` `getFileIcon` with semantic tokens (`text-primary`, `text-primary/70`, `text-muted-foreground`)
+  - [x] `bun run lint` exit 0 (0 errors, 5 warnings — 3 pre-existing `no-console`, 2 `import/no-anonymous-default-export` from Fase 6)
+  - [x] `bunx tsc --noEmit` 0 errors
+  - [x] `bun run test` passes (3/3)
+  - [x] `bun run build` success — all 4 `/examples/*` routes built (`/examples/dashboard`, `/examples/profile-form`, `/examples/table`, `/examples/upload`)
+  - [x] `docker build -t my-nextjs-template .` exit 0 — parent-verified (image sha256:397183ce...849c65)
+  - [x] Smoke test `/`, `/login`, `/examples/table`, `/examples/dashboard`, `/examples/profile-form`, `/examples/upload` return 200 on `PORT=3100` — parent-verified
+<!-- END:example-pages -->
+
+<!-- BEGIN:dashboard-design-system -->
+## Dashboard design system
+
+Bounded, ordered checklist for unifying 3 reference designs (CONYEST finance dashboard, ECOM product form, MONETRA fintech dashboard) into ONE design system. Bun only (never npm). Feature-based structure (`features/finance/`, `features/products/`), barrel exports, `queryKeys` factory, semantic oklch tokens only (no hex, no `zinc-*`, no manual `dark:` overrides). Do not start any phase until its dependencies are complete. All items start pending — mark only after verifying. Full brief at `/tmp/dashboard-brief.md`.
+
+Unified decisions: primary = forest green (buttons), accent lime token (badges/active bars/CTAs), chart-1 lime / chart-2 forest, `--surface-inverse` for dark cards (balance + bank card); form tabs freely navigable (not a sequential stepper).
+
+- [x] **Phase 1 Tokens & primitives**
+  - [x] Add tokens (`--lime`/accent, `--surface-inverse`, chart palette) in `src/app/globals.css` (`:root` + `.dark`, oklch, `@theme inline` mappings)
+  - [x] `bunx --bun shadcn@latest add -y avatar badge table tabs breadcrumb popover command select calendar checkbox tooltip separator progress sheet` (skip ones already present: progress exists)
+  - [x] Create reusable components under `src/components/ui/`: `chip-token.tsx` (removable badge w/ color dot), `search-multi-select.tsx` (Command+Popover, async-filterable options), `input-with-unit.tsx` (Input + trailing small Select), `stat-card.tsx`, `balance-card.tsx` (dark inverse surface), `segmented-tabs.tsx`
+  - [x] Update `src/components/ui/index.ts` barrel
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 2 Dashboard shell**
+  - [x] `AppSidebar` icon rail variant (icon-only w/ Tooltip hover labels, avatar on top, settings/help/logout at bottom, Sheet for mobile)
+  - [x] Header with pill nav + search input + bell + avatar dropdown
+  - [x] Route group `src/app/(dashboard)/dashboard/layout.tsx`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 3 Finance dashboard (Monetra layout)**
+  - [x] Greeting header, `SmartWalletCard` (+Add New badge, 3 category icon tiles)
+  - [x] 4 `StatCard`s, `QuickSend` avatar stack, `BankCard` (masked number, Deposit/Transfer), `QuickAction` grid, `StarterPlan` CTA
+  - [x] Mock service + React Query hooks + `queryKeys.finance.*` entries, `Skeleton` while loading
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 4 Cash Flow chart**
+  - [x] Recharts `BarChart` monthly, custom black rounded Tooltip, segmented tabs (Income/Expenses/Savings), period Select (Yearly/Monthly), active bar lime
+  - [x] Colors via `var(--chart-1)`/`var(--chart-2)`/`var(--border)`/`var(--muted-foreground)`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 5 CONYEST analytics screen**
+  - [x] Route `/analytics` reusing CashflowChart + StatCard + BalanceCard + donut PieChart with legend
+  - [x] Recent Transactions TanStack Table with status Badges (default=Completed, destructive=Failed, secondary+amber text=Pending), This Month filter
+  - [x] Mock service + `queryKeys.finance.transactions`
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run build` success
+
+- [x] **Phase 6 Product form `/products/new` (ecom)**
+  - [x] Breadcrumb, 6 Tabs (only "Variations and price" implemented; others render placeholder)
+  - [x] `SearchMultiSelect` for Colour/Size (mock async service), `ChipToken` selection
+  - [x] Variant matrix grid = cartesian product of colours x sizes with sparse overrides (RHF + zodResolver + useFieldArray; per-row stock/price/discount inline Inputs; Price/Discount merged column per colour group; removing a chip removes related rows)
+  - [x] Grouped "Price & offer" sub-panel (Price + currency Select, Promo price + type Select, date range via Calendar+Popover)
+  - [x] Zod schema in `features/products/types`, unit test (vitest) for matrix builder logic
+  - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run test` passes, `bun run build` success
+
+- [x] **Phase 7 Final verification**
+  - [x] `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass
+  - [x] Smoke test routes `/dashboard`, `/analytics`, `/products/new` return 200 (parent runs server on `PORT=3100` — do NOT start servers, do NOT touch `/proc`, no process discovery)
+<!-- END:dashboard-design-system -->
+
+<!-- BEGIN:ss-blocks-wiring -->
+## SS Blocks wiring checklist
+
+- [x] **1. Auth routes (`/verify-email`, `/2fa`)** — installed and wired (`verify-email-01`, `two-factor-authentication-01`); existing login/register/forgot/reset kept with existing auth logic (collision handled)
+- [x] **2. Dashboard Demo (`/dashboard-v2`)** — shell, sidebar, header, footer, and Sales Metrics chart (`chart-component-01`)
+- [x] **3. Marketing Route Group `(marketing)`** — layout with footer (`footer-component-11`), landing `/` (hero-01 + HomeHero + logo-cloud-01 + testimonials-26 + faq-21), `/about` (about-us-page-01 + timeline-05/07 + hero-41 + logo-cloud-10), `/contact`, `/blog` (blog-15 + blog-17), `/portfolio`, `/events`, `/team`, `/faq`, `/gallery`, `/schedule`, `/account-settings`, `/email-application`, `/form-layout`, `/file-upload`
+- [x] **4. Cleanup & Quality** — raw block orphan folders removed; helper scripts removed; `src/lib/utils.ts` fixed to re-export `cn` from `@/utils`
+<!-- END:ss-blocks-wiring -->
+
+<!-- BEGIN:global-sidebar-shell -->
+## Global sidebar shell checklist
+
+- [x] **1. Shared sidebar shell component (`SsAppShell`)** — created in `src/components/layouts/ss-app-shell.tsx` combining `SidebarProvider`, collapsible `Sidebar`, header with trigger + search + notifications + language + theme + user menu, and footer.
+- [x] **2. Navigation covering ALL routes** — grouped into Overview (`/`, `/dashboard`, `/dashboard-v2`, `/analytics`), Apps (`/products/new`, `/email-application`, `/schedule`, `/file-upload`, `/form-layout`, `/account-settings`, `/events`), and Marketing (`/about`, `/blog`, `/contact`, `/portfolio`, `/team`, `/faq`, `/gallery`) with active states and badges.
+- [x] **3. Applied to all layouts except auth** — wired into `(marketing)/layout.tsx`, `(main)/layout.tsx`, `(dashboard)/layout.tsx`, and `dashboard-v2/layout.tsx`. Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/2fa`) excluded.
+- [x] **4. Refactored finance dashboard (`/dashboard`)** — wrapped via `(dashboard)/layout.tsx` using `SsAppShell`.
+- [x] **5. Final verification** — `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass successfully.
+<!-- END:global-sidebar-shell -->
+
+<!-- BEGIN:mui-density-restyle -->
+## MUI-density restyle checklist
+
+- [x] **F0. Foundation tokens** — elevation shadow vars (`--shadow-elevation-1`, `--shadow-elevation-4`, `--shadow-elevation-8`, `--shadow-elevation-24`) and `--radius-control` (4px) added to `src/app/globals.css` `@theme inline`.
+- [x] **F1. Buttons & toggles** — `button.tsx`, `toggle.tsx`, `toggle-group.tsx`, `segmented-tabs.tsx` restyled to 4px radius, 40px default / 32px sm / 48px lg heights, elevation-1 default shadow with hover elevation-4, segmented tabs 1px border group with filled muted selected state.
+- [x] **F2. Inputs family** — `input.tsx`, `select.tsx`, `textarea.tsx`, `input-group.tsx`, `password-input.tsx`, `input-otp.tsx`, `input-with-unit.tsx`, `search-multi-select.tsx` restyled to h-12 (48px) height, 4px radius (`--radius-control`), text-base, primary border + 1px ring focus state.
+- [x] **F3. Selection controls** — checkbox 18px square 2px radius 40px hit area, radio-group 20px circle with primary dot, switch MUI geometry (58x38 touch area, 34x14 track, 24px thumb), calendar selected day filled circle primary with 4px button radius.
+- [x] **F4. Overlays & menus** — dialog 4px radius + elevation-24 + xl font-medium title; dropdown-menu elevation-8 + 40px h items + 4px radius panel; popover & sheet elevation-8 + 4px radius; tooltip solid dark bg + xs text + 4px radius.
+- [x] **F5. Data display** — card 4px radius + elevation-1 + xl font-medium title; table ~48px row padding + medium head; badge & chip-token pill (32px h, px-4); progress 4px track; pagination size-10 rounded-full primary active; breadcrumb '›' separator; navigation-menu 40px h font-medium; accordion/collapsible divider borders + py-4 font-medium trigger; skeleton 4px radius.
+<!-- END:mui-density-restyle -->

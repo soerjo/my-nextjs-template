@@ -3,10 +3,13 @@ import type { UseFormRegister } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 
 import { LoginForm } from '@/features/auth/components/login-form';
 import { PasswordInput } from '@/components/ui/password-input';
 import { AppHeader } from '@/components/layouts/app-header';
+import { AppStoreProvider } from '@/stores';
+import messages from '@/i18n/messages/en.json';
 
 const mockLogin = vi.fn();
 const mockLogout = vi.fn();
@@ -20,9 +23,18 @@ vi.mock('next-themes', () => ({
   useTheme: () => ({ resolvedTheme: 'light', setTheme: vi.fn() }),
 }));
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 describe('LoginForm', () => {
   it('renders the Sign In heading and email field', () => {
-    render(<LoginForm />);
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LoginForm />
+      </NextIntlClientProvider>,
+    );
 
     expect(screen.getByRole('heading', { name: 'Sign In' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your email')).toBeInTheDocument();
@@ -39,7 +51,11 @@ describe('PasswordInput', () => {
       ref: vi.fn(),
     })) as unknown as UseFormRegister<Record<string, never>>;
 
-    render(<PasswordInput label="Password" name="password" placeholder="Enter your password" register={register} />);
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PasswordInput label="Password" name="password" placeholder="Enter your password" register={register} />
+      </NextIntlClientProvider>,
+    );
 
     const input = screen.getByLabelText('Password');
 
@@ -55,7 +71,13 @@ describe('PasswordInput', () => {
 
 describe('AppHeader', () => {
   it('renders a logout button', () => {
-    render(<AppHeader />);
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AppStoreProvider>
+          <AppHeader />
+        </AppStoreProvider>
+      </NextIntlClientProvider>,
+    );
 
     expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
   });

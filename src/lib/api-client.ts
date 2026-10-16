@@ -1,5 +1,6 @@
 import { TokenManager } from '@/features/auth/services/token-manager';
 import { API_ROUTES } from '@/constants';
+import { appConfig } from '@/config';
 
 type RequestOptions = {
   body?: string;
@@ -133,7 +134,124 @@ class ApiClient {
     }
   }
 
+  private async handleDummyRequest<T>(endpoint: string, _options: RequestInit & RequestOptions): Promise<T> {
+    const delay = Math.floor(Math.random() * 200) + 300; // 300-500ms
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    const createDummyJwt = (expiresInSeconds: number = 86400) => {
+      const now = Math.floor(Date.now() / 1000);
+      const header = { alg: 'HS256', typ: 'JWT' };
+      const payload = {
+        sub: '1',
+        email: 'dummy@example.com',
+        name: 'Dummy User',
+        iat: now,
+        exp: now + expiresInSeconds,
+      };
+
+      const base64UrlEncode = (obj: object) => {
+        const json = JSON.stringify(obj);
+        return btoa(json).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      };
+
+      return `${base64UrlEncode(header)}.${base64UrlEncode(payload)}.dummy-signature`;
+    };
+
+    const dummyAccessToken = createDummyJwt();
+    const dummyRefreshToken = 'dummy_refresh_token_string';
+    const dummyUser = {
+      id: '1',
+      email: 'dummy@example.com',
+      firstName: 'Dummy',
+      lastName: 'User',
+      name: 'Dummy User',
+    };
+
+    if (endpoint.includes(API_ROUTES.login)) {
+      return {
+        data: {
+          accessToken: dummyAccessToken,
+          refreshToken: dummyRefreshToken,
+        },
+        message: 'Login successful (Dummy Mode)',
+      } as unknown as T;
+    }
+
+    if (endpoint.includes(API_ROUTES.register)) {
+      return {
+        data: {
+          message: 'Registration successful (Dummy Mode)',
+        },
+        message: 'Registration successful',
+      } as unknown as T;
+    }
+
+    if (endpoint.includes(API_ROUTES.forgotPassword)) {
+      return {
+        data: {
+          message: 'Password reset email sent (Dummy Mode)',
+        },
+        message: 'Password reset email sent',
+      } as unknown as T;
+    }
+
+    if (endpoint.includes(API_ROUTES.resetPassword)) {
+      return {
+        data: {
+          message: 'Password reset successful (Dummy Mode)',
+        },
+        message: 'Password reset successful',
+      } as unknown as T;
+    }
+
+    if (endpoint.includes(API_ROUTES.verifyToken)) {
+      return {
+        data: {
+          valid: true,
+          user: dummyUser,
+        },
+        message: 'Token verified (Dummy Mode)',
+      } as unknown as T;
+    }
+
+    if (endpoint.includes(API_ROUTES.refreshToken)) {
+      return {
+        data: {
+          accessToken: dummyAccessToken,
+          refreshToken: dummyRefreshToken,
+        },
+        message: 'Token refreshed (Dummy Mode)',
+      } as unknown as T;
+    }
+
+    if (endpoint.includes(API_ROUTES.logout)) {
+      return {
+        data: null,
+        message: 'Logout successful (Dummy Mode)',
+      } as unknown as T;
+    }
+
+    // Generic fallback for any other auth/API route in dummy mode
+    return {
+      data: dummyUser,
+      message: 'Success (Dummy Mode)',
+    } as unknown as T;
+  }
+
   async request<T>(endpoint: string, options: RequestInit & RequestOptions = {}): Promise<T> {
+    if (
+      appConfig.isDummyMode &&
+      (endpoint.includes('/auth/') ||
+        endpoint.includes('login') ||
+        endpoint.includes('register') ||
+        endpoint.includes('verify') ||
+        endpoint.includes('refresh') ||
+        endpoint.includes('logout') ||
+        endpoint.includes('password'))
+    ) {
+      return this.handleDummyRequest<T>(endpoint, options);
+    }
+
     const { body, headers: customHeaders, skipAuth = false, ...rest } = options;
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {

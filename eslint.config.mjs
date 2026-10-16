@@ -46,6 +46,14 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    name: "custom/ss-blocks-img",
+    files: ["src/components/shadcn-studio/blocks/**/*.{ts,tsx}"],
+    rules: {
+      // ss-blocks ship external dynamic images with arbitrary URLs
+      "@next/next/no-img-element": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
