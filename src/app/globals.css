@@ -50,7 +50,22 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
-}
+    --animate-marquee-horizontal: marquee-horizontal var(--marquee-duration) infinite linear;
+  @keyframes marquee-horizontal {
+  from {
+    transform: translateX(0);
+        }
+  to {
+    transform: translateX(calc(-100% - var(--marquee-gap)));
+        }
+    }
+  --animate-eq: eq 0.9s ease-in-out infinite
+;
+  @keyframes eq {
+  0%, 100% {
+    transform: scaleY(0.3);}
+  50% {
+    transform: scaleY(1);}}}
 
 :root {
     --background: oklch(1 0 0);

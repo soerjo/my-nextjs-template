@@ -1,10 +1,10 @@
-import { MainLayout } from "@/components/layouts";
-import { ProtectedRoute } from "@/features/auth/hooks";
+import { SsAppShell } from '@/components/layouts/ss-app-shell';
+import { ProtectedRoute } from '@/features/auth/hooks';
 
 export default function MainLayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
-      <MainLayout>{children}</MainLayout>
+      <SsAppShell>{children}</SsAppShell>
     </ProtectedRoute>
   );
 }

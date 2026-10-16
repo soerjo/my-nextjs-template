@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/utils';
+import { cn } from '@/utils/index';
 
 function Card({ className, size = 'default', ...props }: React.ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
   return (

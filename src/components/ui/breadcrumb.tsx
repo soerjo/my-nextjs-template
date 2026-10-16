@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cn } from '@/utils';
+import { cn } from '@/utils/index';
 import { Slot } from 'radix-ui';
 import { ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
 

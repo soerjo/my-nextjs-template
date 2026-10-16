@@ -338,7 +338,26 @@ Unified decisions: primary = forest green (buttons), accent lime token (badges/a
   - [x] Zod schema in `features/products/types`, unit test (vitest) for matrix builder logic
   - [x] Verify: `bun run lint` exit 0, `bunx tsc --noEmit` 0 errors, `bun run test` passes, `bun run build` success
 
-- [ ] **Phase 7 Final verification**
-  - [ ] `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass
-  - [ ] Smoke test routes `/dashboard`, `/analytics`, `/products/new` return 200 (parent runs server on `PORT=3100` — do NOT start servers, do NOT touch `/proc`, no process discovery)
+- [x] **Phase 7 Final verification**
+  - [x] `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass
+  - [x] Smoke test routes `/dashboard`, `/analytics`, `/products/new` return 200 (parent runs server on `PORT=3100` — do NOT start servers, do NOT touch `/proc`, no process discovery)
 <!-- END:dashboard-design-system -->
+
+<!-- BEGIN:ss-blocks-wiring -->
+## SS Blocks wiring checklist
+
+- [x] **1. Auth routes (`/verify-email`, `/2fa`)** — installed and wired (`verify-email-01`, `two-factor-authentication-01`); existing login/register/forgot/reset kept with existing auth logic (collision handled)
+- [x] **2. Dashboard Demo (`/dashboard-v2`)** — shell, sidebar, header, footer, and Sales Metrics chart (`chart-component-01`)
+- [x] **3. Marketing Route Group `(marketing)`** — layout with footer (`footer-component-11`), landing `/` (hero-01 + HomeHero + logo-cloud-01 + testimonials-26 + faq-21), `/about` (about-us-page-01 + timeline-05/07 + hero-41 + logo-cloud-10), `/contact`, `/blog` (blog-15 + blog-17), `/portfolio`, `/events`, `/team`, `/faq`, `/gallery`, `/schedule`, `/account-settings`, `/email-application`, `/form-layout`, `/file-upload`
+- [x] **4. Cleanup & Quality** — raw block orphan folders removed; helper scripts removed; `src/lib/utils.ts` fixed to re-export `cn` from `@/utils`
+<!-- END:ss-blocks-wiring -->
+
+<!-- BEGIN:global-sidebar-shell -->
+## Global sidebar shell checklist
+
+- [x] **1. Shared sidebar shell component (`SsAppShell`)** — created in `src/components/layouts/ss-app-shell.tsx` combining `SidebarProvider`, collapsible `Sidebar`, header with trigger + search + notifications + language + theme + user menu, and footer.
+- [x] **2. Navigation covering ALL routes** — grouped into Overview (`/`, `/dashboard`, `/dashboard-v2`, `/analytics`), Apps (`/products/new`, `/email-application`, `/schedule`, `/file-upload`, `/form-layout`, `/account-settings`, `/events`), and Marketing (`/about`, `/blog`, `/contact`, `/portfolio`, `/team`, `/faq`, `/gallery`) with active states and badges.
+- [x] **3. Applied to all layouts except auth** — wired into `(marketing)/layout.tsx`, `(main)/layout.tsx`, `(dashboard)/layout.tsx`, and `dashboard-v2/layout.tsx`. Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/2fa`) excluded.
+- [x] **4. Refactored finance dashboard (`/dashboard`)** — wrapped via `(dashboard)/layout.tsx` using `SsAppShell`.
+- [x] **5. Final verification** — `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run build` all pass successfully.
+<!-- END:global-sidebar-shell -->

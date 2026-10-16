@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/utils';
+import { cn } from '@/utils/index';
 import { Progress as ProgressPrimitive } from 'radix-ui';
 
 function Progress({ className, value, ...props }: React.ComponentProps<typeof ProgressPrimitive.Root>) {
