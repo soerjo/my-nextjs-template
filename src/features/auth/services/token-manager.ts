@@ -9,7 +9,6 @@ export interface TokenPayload {
 
 export class TokenManager {
   private static readonly ACCESS_TOKEN_KEY = 'accessToken';
-  private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
   private static readonly EXPIRATION_BUFFER = 60 * 1000; // 1 minute buffer
 
   static getAccessToken(): string | null {
@@ -28,25 +27,8 @@ export class TokenManager {
     localStorage.removeItem(this.ACCESS_TOKEN_KEY);
   }
 
-  static getRefreshToken(): string | null {
-    if (typeof window === 'undefined') return null;
-
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  static setRefreshToken(token: string): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, token);
-  }
-
-  static removeRefreshToken(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-  }
-
   static clearTokens(): void {
     this.removeAccessToken();
-    this.removeRefreshToken();
   }
 
   static parseToken(token: string): TokenPayload | null {

@@ -1,11 +1,10 @@
 'use client';
 
-import type { LoginResponse } from '@/features/auth/types';
 import type { ApiResponse } from '@/types';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ROUTES, API_ROUTES } from '@/constants';
 import { apiClient, queryKeys } from '@/lib';
@@ -24,60 +23,83 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+
+  const [isRefreshingInitial, setIsRefreshingInitial] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hasToken = !!TokenManager.getAccessToken();
+    const isValid = TokenManager.isAccessTokenValid();
+    return hasToken && !isValid;
+  });
+
+  const clearSession = useCallback(() => {
+    TokenManager.clearTokens();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hasToken = !!TokenManager.getAccessToken();
+    const isValid = TokenManager.isAccessTokenValid();
+    if (hasToken && !isValid) {
+      apiClient
+        .refreshSession()
+        .then((token) => {
+          if (token) {
+            TokenManager.setAccessToken(token);
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.verify });
+          } else {
+            clearSession();
+          }
+        })
+        .catch(() => {
+          clearSession();
+        })
+        .finally(() => {
+          setIsRefreshingInitial(false);
+        });
+    }
+  }, [clearSession, queryClient]);
 
   const verifyTokenQuery = useQuery<ApiResponse<{ valid: boolean }>>({
     queryKey: queryKeys.auth.verify,
     queryFn: () => apiClient.get(API_ROUTES.verifyToken),
     retry: false,
-    enabled: typeof window !== 'undefined' && TokenManager.isAccessTokenValid(),
+    enabled: typeof window !== 'undefined' && TokenManager.isAccessTokenValid() && !isRefreshingInitial,
     staleTime: 1000 * 60 * 5,
   });
 
   const logoutMutation = useMutation({
-    mutationFn: () => apiClient.post<void>(API_ROUTES.logout),
-    onMutate: () => {
-      TokenManager.clearTokens();
+    mutationFn: async () => {
+      try {
+        await apiClient.post<void>(API_ROUTES.logout);
+      } catch {
+        // Best-effort logout
+      }
     },
-    onSettled: async () => {
-      await verifyTokenQuery.refetch();
-      router.push(ROUTES.login);
-    },
-  });
-
-  const refreshTokenMutation = useMutation({
-    mutationFn: () =>
-      apiClient.post<ApiResponse<LoginResponse>>(
-        API_ROUTES.refreshToken,
-        {
-          refreshToken: TokenManager.getRefreshToken(),
-        },
-        { skipAuth: true },
-      ),
-    onSuccess: (response) => {
-      if (response.data?.accessToken) {
-        TokenManager.setAccessToken(response.data.accessToken);
-        if (response.data.refreshToken) {
-          TokenManager.setRefreshToken(response.data.refreshToken);
-        }
+    onSettled: () => {
+      clearSession();
+      if (typeof window !== 'undefined') {
+        window.location.replace(ROUTES.login);
+      } else {
+        router.push(ROUTES.login);
       }
     },
   });
 
   const logout = useCallback(async () => {
-    TokenManager.clearTokens();
-    router.push(ROUTES.login);
-  }, [router]);
+    await logoutMutation.mutateAsync();
+  }, [logoutMutation]);
 
   const hasToken = !!TokenManager.getAccessToken();
   const isValid = TokenManager.isAccessTokenValid();
   const isVerified = verifyTokenQuery.data?.data?.valid !== false;
-  const isAuthenticated = hasToken && isValid && isVerified;
+  const isAuthenticated = hasToken && isValid && (verifyTokenQuery.data ? isVerified : true);
 
   const isAuthLoading = useMemo(() => {
     if (typeof window === 'undefined') return true;
-
+    if (isRefreshingInitial) return true;
     return verifyTokenQuery.isLoading;
-  }, [verifyTokenQuery.isLoading]);
+  }, [isRefreshingInitial, verifyTokenQuery.isLoading]);
 
   const isLoading = useMemo(() => {
     return isAuthLoading || logoutMutation.isPending;
@@ -97,49 +119,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pathname !== ROUTES.login &&
       pathname !== ROUTES.register &&
       pathname !== ROUTES.forgotPassword &&
-      pathname !== ROUTES.resetPassword
+      pathname !== ROUTES.resetPassword &&
+      pathname !== '/verify-email' &&
+      pathname !== '/2fa'
     ) {
-      router.push(ROUTES.login);
+      if (typeof window !== 'undefined') {
+        window.location.replace(ROUTES.login);
+      } else {
+        router.push(ROUTES.login);
+      }
     }
   }, [isAuthenticated, isAuthLoading, pathname, router]);
 
   useEffect(() => {
-    if (!isAuthenticated || !TokenManager.getAccessToken()) return;
+    if (typeof window === 'undefined') return;
 
-    const checkAndRefreshToken = () => {
-      const token = TokenManager.getAccessToken();
-
-      if (!token) return;
-
-      const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
-
-      if (timeUntilExpiration <= 5 * 60 * 1000 && timeUntilExpiration > 0) {
-        refreshTokenMutation.mutate();
-      }
+    const handleUnauthorized = () => {
+      clearSession();
+      window.location.replace(ROUTES.login);
     };
 
-    const token = TokenManager.getAccessToken();
-
-    if (token) {
-      const timeUntilExpiration = TokenManager.getTimeUntilExpiration(token);
-      const initialDelay = Math.max(0, timeUntilExpiration - 5 * 60 * 1000);
-
-      let intervalId: ReturnType<typeof setInterval> | null = null;
-
-      const timer = setTimeout(() => {
-        checkAndRefreshToken();
-
-        intervalId = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
-      }, initialDelay);
-
-      return () => {
-        clearTimeout(timer);
-        if (intervalId) {
-          clearInterval(intervalId);
-        }
-      };
-    }
-  }, [isAuthenticated, refreshTokenMutation]);
+    window.addEventListener('auth:unauthorized', handleUnauthorized as EventListener);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized as EventListener);
+    };
+  }, [clearSession]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

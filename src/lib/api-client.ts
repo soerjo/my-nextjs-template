@@ -1,5 +1,5 @@
 import { TokenManager } from '@/features/auth/services/token-manager';
-import { API_ROUTES } from '@/constants';
+import { API_ROUTES, ROUTES } from '@/constants';
 import { appConfig } from '@/config';
 
 type RequestOptions = {
@@ -15,6 +15,11 @@ class ApiClient {
 
   constructor(baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api') {
     this.baseUrl = baseUrl;
+  }
+
+  private buildUrl(endpoint: string): string {
+    if (endpoint.startsWith(this.baseUrl)) return endpoint;
+    return `${this.baseUrl}${endpoint}`;
   }
 
   private getAuthHeaders(skipAuth: boolean = false): Record<string, string> {
@@ -90,48 +95,39 @@ class ApiClient {
   }
 
   private async refreshAccessToken(): Promise<string | null> {
-    const refreshToken = TokenManager.getRefreshToken();
-
-    if (!refreshToken) {
-      TokenManager.clearTokens();
-
-      return null;
-    }
-
     try {
-      const response = await fetch(`${this.baseUrl}${API_ROUTES.refreshToken}`, {
+      const response = await fetch(this.buildUrl(API_ROUTES.refreshToken), {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken }),
       });
 
       if (!response.ok) {
         TokenManager.clearTokens();
-
         return null;
       }
 
-      const data = await this.parseResponse<{
-        data?: { accessToken?: string; refreshToken?: string };
-      }>(response);
+      const data = await this.parseResponse<{ accessToken?: string } | { data?: { accessToken?: string } }>(response);
 
-      if (data?.data?.accessToken) {
-        TokenManager.setAccessToken(data.data.accessToken);
-        if (data.data.refreshToken) {
-          TokenManager.setRefreshToken(data.data.refreshToken);
-        }
+      const payload = data && typeof data === 'object' && 'data' in data && data.data ? data.data : data;
+      const accessToken = (payload as { accessToken?: string })?.accessToken;
 
-        return data.data.accessToken;
+      if (accessToken) {
+        TokenManager.setAccessToken(accessToken);
+        return accessToken;
       }
 
       return null;
     } catch {
       TokenManager.clearTokens();
-
       return null;
     }
+  }
+
+  public async refreshSession(): Promise<string | null> {
+    return this.refreshAccessToken();
   }
 
   private async handleDummyRequest<T>(endpoint: string, _options: RequestInit & RequestOptions): Promise<T> {
@@ -158,7 +154,6 @@ class ApiClient {
     };
 
     const dummyAccessToken = createDummyJwt();
-    const dummyRefreshToken = 'dummy_refresh_token_string';
     const dummyUser = {
       id: '1',
       email: 'dummy@example.com',
@@ -171,7 +166,6 @@ class ApiClient {
       return {
         data: {
           accessToken: dummyAccessToken,
-          refreshToken: dummyRefreshToken,
         },
         message: 'Login successful (Dummy Mode)',
       } as unknown as T;
@@ -218,7 +212,6 @@ class ApiClient {
       return {
         data: {
           accessToken: dummyAccessToken,
-          refreshToken: dummyRefreshToken,
         },
         message: 'Token refreshed (Dummy Mode)',
       } as unknown as T;
@@ -254,7 +247,7 @@ class ApiClient {
 
     const { body, headers: customHeaders, skipAuth = false, ...rest } = options;
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const response = await fetch(this.buildUrl(endpoint), {
       ...rest,
       headers: {
         'Content-Type': 'application/json',
@@ -271,12 +264,13 @@ class ApiClient {
     }
 
     if (response.status === 401 && !skipAuth) {
-      const refreshToken = TokenManager.getRefreshToken();
+      const token = TokenManager.getAccessToken();
 
-      if (!refreshToken) {
+      if (!token) {
         TokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          window.location.replace(ROUTES.login);
         }
         throw new ApiError(response.status, await this.parseErrorMessage(response));
       }
@@ -301,15 +295,19 @@ class ApiClient {
           return this.request<T>(endpoint, options);
         } else {
           this.isRefreshing = false;
+          TokenManager.clearTokens();
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            window.location.replace(ROUTES.login);
           }
           throw new ApiError(response.status, 'Failed to refresh token');
         }
       } catch (error) {
         this.isRefreshing = false;
+        TokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          window.location.replace(ROUTES.login);
         }
         throw error;
       }

@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   // Emit a self-contained server bundle in .next/standalone for container images.
   output: 'standalone',
   reactStrictMode: true,
+  experimental: {
+    reactDebugChannel: false,
+  },
   // Tailscale access untuk dev container (memungkinkan cross-origin dev resource /_next/hmr dari host Tailscale)
   allowedDevOrigins: ['100.64.62.59', 'localhost'],
   async rewrites() {
