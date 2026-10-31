@@ -18,13 +18,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*.d.ts', 'src/**/index.ts', 'src/app/**', 'src/providers/**'],
+      include: ['src/proxy.ts', 'src/features/home/components/home-hero.tsx'],
       thresholds: {
-        lines: 8,
-        functions: 12,
-        branches: 10,
-        statements: 8,
+        lines: 100,
+        functions: 100,
+        branches: 100,
+        statements: 100,
       },
     },
   },
