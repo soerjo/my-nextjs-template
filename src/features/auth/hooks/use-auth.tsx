@@ -13,24 +13,6 @@ export function useAuth() {
 }
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAuthLoading } = useAuth();
-  const router = useRouter();
-  const mounted = useIsMounted();
-
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      router.push(ROUTES.login);
-    }
-  }, [isAuthenticated, isAuthLoading, router]);
-
-  if (!mounted || isAuthLoading || !isAuthenticated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-8 animate-spin" />
-      </div>
-    );
-  }
-
   return <>{children}</>;
 }
 

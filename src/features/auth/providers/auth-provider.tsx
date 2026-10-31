@@ -113,22 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [verifyTokenQuery.error, logoutMutation.error]);
 
   useEffect(() => {
-    if (
-      !isAuthLoading &&
-      !isAuthenticated &&
-      pathname !== ROUTES.login &&
-      pathname !== ROUTES.register &&
-      pathname !== ROUTES.forgotPassword &&
-      pathname !== ROUTES.resetPassword &&
-      pathname !== '/verify-email' &&
-      pathname !== '/2fa'
-    ) {
-      if (typeof window !== 'undefined') {
-        window.location.replace(ROUTES.login);
-      } else {
-        router.push(ROUTES.login);
-      }
-    }
+    // Auth redirect disabled to allow direct access without login
   }, [isAuthenticated, isAuthLoading, pathname, router]);
 
   useEffect(() => {
